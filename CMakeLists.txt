@@ -15,4 +15,8 @@ add_executable(LightSong main.cpp
         utils.h
         core/EnginePath.h
         utils.cpp
-        core/GameConfig.cpp)
+        core/GameConfig.cpp
+        platform/cli/Interface.cpp
+        platform/cli/Interface.h
+        platform/cli/CliCommand.cpp
+        platform/cli/CliCommand.h)

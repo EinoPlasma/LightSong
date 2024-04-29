@@ -13,6 +13,7 @@
 namespace core {
 
     enum CommandType {
+        // ENDOFFILE, /* 读到文件末尾直接返回一个ENDOFFILE给上级处理，或者是让上级自己检查有没有EOF，哪一种更好呢？
         // BLANK, /* Deprecated, since all the lines not begins with '#' will be discord when Parser()*/
         UNKNOWN,
         // 1. dialogue / text
@@ -216,9 +217,6 @@ namespace core {
 
         explicit CommandTitleDsp() = default;
     };
-
-    //////////////////////////
-    // 之后的类传params参数
 
     class CommandChara : public Command {
     public:

@@ -8,6 +8,7 @@
 #include <string>
 #include "GameConfig.h"
 #include "Parser.h"
+#include "../platform/cli/CliCommand.h"
 
 namespace core {
 
@@ -17,8 +18,10 @@ namespace core {
         std::unique_ptr<core::GameConfig> config = nullptr;
         std::unique_ptr<core::Parser> parser = nullptr;
     public:
-        explicit Director(const char *root_path);
+        explicit Director(std::basic_string<char> root_path);
         void next();
+
+        std::unique_ptr<cli::CliCommand> nextCliCommand();
     };
 
 } // core

@@ -20,8 +20,7 @@ namespace core {
             case WAITKEY:
                 return std::make_unique<CommandWaitKey>();
             case TITLE:
-                if (params.size() == 1)
-                    return std::make_unique<CommandTitle>(params);
+                return std::make_unique<CommandTitle>(params);
             case TITLE_DSP:
                 return std::make_unique<CommandTitleDsp>();
             case CHARA:

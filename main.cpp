@@ -3,6 +3,11 @@
 #include "core/Director.h"
 #include "core/GameConfig.h"
 #include "utils.h"
+#include "platform/cli/Interface.h"
+
+#include <conio.h>
+#include <limits>
+
 /*
  *
     __    _       __    __  _____
@@ -14,7 +19,8 @@
  */
 
 int main() {
-    core::Director director = core::Director(R"(C:\Sync\CS\Projects\CLionProjects\LightSong\reference\games\Ever17\s60v5\Ever17)");
+    // system("chcp 65001");
+    // core::Director director = core::Director(R"(C:\Sync\CS\Projects\CLionProjects\LightSong\reference\games\Ever17\s60v5\Ever17)");
 
     // std::string source = readUtf8File(R"(C:\Sync\CS\Projects\CLionProjects\LightSong\reference\games\Ever17\s60v5\Ever17\gameconfig.txt)");
 
@@ -24,8 +30,11 @@ int main() {
 
     //core::printGameConfig(*config);
 
-    for(int i=0;i<200;i++){
-        director.next();
+    cli::Interface interface = cli::Interface(R"(C:\Sync\CS\Projects\CLionProjects\LightSong\reference\games\Ever17\s60v5\Ever17)");
+
+    for(int i=0;i<100;i++) {
+        interface.tick(0);
+        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // wait key
     }
 
     return 0;
