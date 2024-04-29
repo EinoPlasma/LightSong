@@ -6,7 +6,7 @@
 #include "../utils.h"
 
 namespace core {
-    Parser::Parser(std::string source) : source(std::move(source)), line_number(0){
+    Parser::Parser(std::string source) : source(std::move(source)), currLineNumber(0){
         /*
          * @brief split source by line
          *
@@ -29,10 +29,14 @@ namespace core {
 
     std::unique_ptr<Command> Parser::peek(unsigned int line_number) {
         std::string& line = lines[line_number];
-        std::stringstream ss;
+        std::stringstream ss, ss_params;
         ss << line;
         std::string type_literal;
+        std::string params_literal;
         ss >> type_literal;
+        ss >> params_literal;
+
+        ss_params << params_literal;
 
         CommandType type = UNKNOWN;
         auto it = command_type_map.find(type_literal);
@@ -45,7 +49,7 @@ namespace core {
 
         std::vector<std::string> params;
         std::string param;
-        while (std::getline(ss, param, ',')) {
+        while (std::getline(ss_params, param, ',')) {
             params.push_back(param);
         }
         return createCommand(type, params);
@@ -53,25 +57,33 @@ namespace core {
 
 
 
-    bool Parser::setLineNumber(unsigned int line_number) {
-        if(line_number > this->line_number){
+    bool Parser::setCurrLineNumber(unsigned int line_number) {
+        if(line_number > this->currLineNumber){
             return false;
         }
-        this->line_number = line_number;
+        this->currLineNumber = line_number;
         return true;
     }
 
     std::unique_ptr<Command> Parser::next() {
-        if (line_number >= lines.size()) {
+        if (currLineNumber >= lines.size()) {
             raise(-1);
             // reach to the end of file. the right response here is to panic, though program should exit when reach to EOF, but decide whenever to exit is the director's role.
         }
-        this->line_number++;
-        return peek(line_number - 1);
+        this->currLineNumber++;
+        return peek(currLineNumber - 1);
     }
 
     bool Parser::isEnd() {
-        return line_number >= lines.size();
+        return currLineNumber >= lines.size();
+    }
+
+    unsigned int Parser::getCurrLineNumber() {
+        return currLineNumber;
+    }
+
+    unsigned int Parser::getLineCount() {
+        return lines.size();
     }
 
     std::unique_ptr<Parser> loadScript(const std::string &script_path) {

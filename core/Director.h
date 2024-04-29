@@ -20,7 +20,6 @@ namespace core {
     public:
         explicit Director(std::basic_string<char> root_path);
         void next();
-
         std::unique_ptr<cli::CliCommand> nextCliCommand();
     };
 

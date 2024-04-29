@@ -22,12 +22,14 @@ namespace core {
     private:
         std::string source;
         std::vector<std::string> lines;
-        unsigned int line_number;
+        unsigned int currLineNumber;
     public:
         explicit Parser(std::string source);
         std::unique_ptr<Command> peek(unsigned int line_number);
         std::unique_ptr<Command> next();
-        bool setLineNumber(unsigned int line_number);
+        bool setCurrLineNumber(unsigned int line_number);
+        unsigned int getCurrLineNumber();
+        unsigned int getLineCount();
         bool isEnd();
         /*
         // bool jump(std::string& label);

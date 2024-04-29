@@ -93,11 +93,30 @@ namespace core {
             } else if (type == LABEL) {
                 // LABEL case
             } else if (type == GOTO) {
-                // GOTO case
+                // 跳转到当前脚本里指定的行标签
+                bool flagFoundLabel = false;
+                auto targetCmd = dynamic_cast<CommandGoto*>(cmd.get());
+                std::string targetLabel = targetCmd->label_name;
+                for(int i=0; i < parser->getLineCount(); i++){
+                    if (parser->peek(i)->type() == LABEL) {
+                        auto cmd_label = dynamic_cast<CommandLabel*>(parser->peek(i).get());
+                        if (cmd_label->label_name == targetLabel) {
+                            parser->setCurrLineNumber(i);
+                            flagFoundLabel = true;
+                        }
+                    }
+                }
+                if (!flagFoundLabel){
+                    raise(-1);
+                    std::cerr << "goto a invalid label";
+                    // TODO: 错误处理
+                }
             } else if (type == IF_GOTO) {
                 // IF_GOTO case
             } else if (type == CHANGE) {
-                // CHANGE case
+                // 不带返回的脚本文件跳转。直接更换脚本文件
+                auto targetCmd = dynamic_cast<CommandChange*>(cmd.get());
+                parser = std::move(loadScript(root_path + PATH_DIR_SCRIPT + targetCmd->filename));
             } else if (type == CALL) {
                 // CALL case
             } else if (type == RET) {
