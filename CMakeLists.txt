@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.27)
+cmake_minimum_required(VERSION 3.25)
 project(LightSong)
 
 set(CMAKE_CXX_STANDARD 14)
@@ -19,4 +19,4 @@ add_executable(LightSong main.cpp
         platform/cli/Interface.cpp
         platform/cli/Interface.h
         platform/cli/CliCommand.cpp
-        platform/cli/CliCommand.h)
+        platform/cli/CliCommand.h core/Environment.cpp core/Environment.h)

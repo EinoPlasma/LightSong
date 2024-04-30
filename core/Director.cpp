@@ -8,6 +8,7 @@
 #include "Command.h"
 
 #include "../platform/cli/CliCommand.h"
+#include "../utils.h"
 
 namespace core {
     Director::Director(std::basic_string<char> root_path): root_path(root_path) {
@@ -111,8 +112,83 @@ namespace core {
                     std::cerr << "goto a invalid label";
                     // TODO: 错误处理
                 }
-            } else if (type == IF_GOTO) {
-                // IF_GOTO case
+            } if (type == IF_GOTO) {
+                bool flagIgnoreThisCommand = false; // 如果右操作数为变量且变量未被赋值过，系统会忽略这条 if 语句。
+
+                auto targetCmd = dynamic_cast<CommandIfGoto*>(cmd.get());
+
+                std::string left_operand = targetCmd->left_operand;
+                CommandIfGoto::ComparisonType comparison_type = targetCmd->comparison_type;
+                std::string right_operand = targetCmd->right_operand;
+
+                // 检查左操作数是否存在，如果不存在，系统将其看作0来比较
+                int left_value = 0;
+                bool left_exists = environment->varExists(left_operand);
+                if (left_exists) {
+                   left_value = environment->getVar(left_operand);
+                }
+
+                int right_value = 0;
+                // 如果右操作数是变量，则检查其是否存在
+                if (isIdentifier(right_operand)) {
+                    if (environment->varExists(right_operand)) {
+                        right_value = environment->getVar(right_operand);
+                    } else {
+                        flagIgnoreThisCommand = true;
+                    }
+                } else {
+                    right_value = std::stoi(right_operand);
+                }
+
+                if (flagIgnoreThisCommand) {
+                    // 根据比较类型执行相应的操作
+                    bool condition_met = false;
+                    switch (comparison_type) {
+                        case CommandIfGoto::EQUAL:
+                            condition_met = (left_value == right_value);
+                            break;
+                        case CommandIfGoto::GREATER_THAN:
+                            condition_met = (left_value > right_value);
+                            break;
+                        case CommandIfGoto::LESS_THAN:
+                            condition_met = (left_value < right_value);
+                            break;
+                        case CommandIfGoto::GREATER_THAN_OR_EQUAL:
+                            condition_met = (left_value >= right_value);
+                            break;
+                        case CommandIfGoto::LESS_THAN_OR_EQUAL:
+                            condition_met = (left_value <= right_value);
+                            break;
+                        case CommandIfGoto::NOT_EQUAL:
+                            condition_met = (left_value != right_value);
+                            break;
+                        default:
+                            // 处理未知的比较类型
+                            break;
+                    }
+
+                    if (condition_met) {
+                        // 跳转到指定的行（标签）
+                        // TODO: 这里的goto代码是上面GOTO的case复制过来的，导致代码重复了，得想办法不要重复
+                        bool flagFoundLabel = false;
+                        std::string targetLabel = targetCmd->label_name;
+                        for(int i=0; i < parser->getLineCount(); i++){
+                            if (parser->peek(i)->type() == LABEL) {
+                                auto cmd_label = dynamic_cast<CommandLabel*>(parser->peek(i).get());
+                                if (cmd_label->label_name == targetLabel) {
+                                    parser->setCurrLineNumber(i);
+                                    flagFoundLabel = true;
+                                }
+                            }
+                        }
+                        if (!flagFoundLabel){
+                            raise(-1);
+                            std::cerr << "goto a invalid label";
+                            // TODO: 错误处理
+                        }
+                    }
+                }
+
             } else if (type == CHANGE) {
                 // 不带返回的脚本文件跳转。直接更换脚本文件
                 auto targetCmd = dynamic_cast<CommandChange*>(cmd.get());

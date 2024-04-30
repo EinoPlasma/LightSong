@@ -12,4 +12,6 @@
 
 std::string readUtf8File(const std::string& file_path);
 
+bool isIdentifier(const std::string& str);
+
 #endif // LIGHTSONG_UTILS_H

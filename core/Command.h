@@ -9,6 +9,7 @@
 #include <vector>
 #include <unordered_map>
 #include <memory>
+#include <sstream>
 
 namespace core {
 
@@ -618,15 +619,54 @@ namespace core {
 
     class CommandIfGoto : public Command {
     public:
-        std::string condition;
+        enum ComparisonType {
+            EQUAL,
+            GREATER_THAN,
+            LESS_THAN,
+            GREATER_THAN_OR_EQUAL,
+            LESS_THAN_OR_EQUAL,
+            NOT_EQUAL
+        };
+        std::string condition_literal;
+        std::string left_operand, right_operand;
+        ComparisonType comparison_type;
         std::string label_name;
 
         CommandType type() override { return IF_GOTO; }
 
         explicit CommandIfGoto(const std::vector<std::string>& params) {
             if (params.size() >= 2) {
-                condition = params[0];
-                label_name = params[1];
+                condition_literal = params[0];
+                std::string condition_operator;
+                if (condition_literal.find("!=") != std::string::npos) {
+                    comparison_type = NOT_EQUAL;
+                    condition_operator = "!=";
+                } else if (condition_literal.find(">=") != std::string::npos) {
+                    comparison_type = GREATER_THAN_OR_EQUAL;
+                    condition_operator = ">=";
+                } else if (condition_literal.find("<=") != std::string::npos) {
+                    comparison_type = LESS_THAN_OR_EQUAL;
+                    condition_operator = "<=";
+                } else if (condition_literal.find('=') != std::string::npos) {
+                    comparison_type = EQUAL;
+                    condition_operator = "=";
+                } else if (condition_literal.find('>') != std::string::npos) {
+                    comparison_type = GREATER_THAN;
+                    condition_operator = ">";
+                } else if (condition_literal.find('<') != std::string::npos) {
+                    comparison_type = LESS_THAN;
+                    condition_operator = "<";
+                }
+
+                size_t operator_pos = condition_literal.find(condition_operator);
+                left_operand = condition_literal.substr(0, operator_pos);
+                right_operand = condition_literal.substr(operator_pos + condition_operator.length());
+
+                std::string goto_command_literal = params[1], foo;
+                std::stringstream goto_command_stream;
+                goto_command_stream << goto_command_literal;
+                goto_command_stream >> foo; // eat "goto"
+                goto_command_stream >> label_name;
             }
         }
     };
