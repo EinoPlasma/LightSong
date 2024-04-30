@@ -10,7 +10,7 @@
 
 namespace core {
     void Environment::set(const std::string &var_name, const std::string &var_value) {
-        if (!isIdentifier(var_name)) {
+        if (!isIdentifier(var_value)) {
             variables[var_name] = std::stoi(var_value);
         }else{
             if (variables.find(var_value) != variables.end()){
@@ -66,8 +66,8 @@ namespace core {
         return variables[var_name];
     }
 
-    void Environment::pushCallStack(const CallStackItem& item) {
-        call_stack.push(item);
+    void Environment::pushCallStack(CallStackItem item) {
+        call_stack.push(std::move(item));
     }
 
     CallStackItem Environment::popCallStack() {
@@ -76,8 +76,8 @@ namespace core {
         return res;
     }
 
-    Environment::Environment(const CallStackItem& initial_call_stack_item) {
-        pushCallStack(initial_call_stack_item);
+    Environment::Environment(CallStackItem initial_call_stack_item) {
+        pushCallStack(std::move(initial_call_stack_item));
     }
 
 

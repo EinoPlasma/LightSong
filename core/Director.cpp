@@ -14,6 +14,8 @@ namespace core {
     Director::Director(std::basic_string<char> root_path): root_path(root_path) {
         config = loadGameConfig(root_path + PATH_FILE_GAMECONFIG);
         parser = loadScript(root_path + PATH_DIR_SCRIPT + PATH_FILE_SCRIPT_START);
+        CallStackItem initial_call_stack_item = CallStackItem{root_path + PATH_DIR_SCRIPT + PATH_FILE_SCRIPT_START, 0};
+        environment = std::make_unique<Environment>(initial_call_stack_item);
     }
 
     std::unique_ptr<cli::CliCommand> Director::nextCliCommand() {
@@ -86,11 +88,14 @@ namespace core {
             } else if (type == CHARA_ANIME) {
                 // CHARA_ANIME case
             } else if (type == SET) {
-                // SET case
+                auto targetCmd = dynamic_cast<CommandSet*>(cmd.get());
+                environment->set(targetCmd->var_name, targetCmd->var_value);
             } else if (type == ADD) {
-                // ADD case
+                auto targetCmd = dynamic_cast<CommandAdd*>(cmd.get());
+                environment->add(targetCmd->var_name, targetCmd->add_value, false);
             } else if (type == SUB) {
-                // SUB case
+                auto targetCmd = dynamic_cast<CommandAdd*>(cmd.get());
+                environment->sub(targetCmd->var_name, targetCmd->add_value);
             } else if (type == LABEL) {
                 // LABEL case
             } else if (type == GOTO) {

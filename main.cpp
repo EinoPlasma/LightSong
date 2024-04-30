@@ -19,7 +19,7 @@
  */
 
 int main() {
-    // system("chcp 65001");
+    system("chcp 65001");
     // core::Director director = core::Director(R"(C:\Sync\CS\Projects\CLionProjects\LightSong\reference\games\Ever17\s60v5\Ever17)");
 
     // std::string source = readUtf8File(R"(C:\Sync\CS\Projects\CLionProjects\LightSong\reference\games\Ever17\s60v5\Ever17\gameconfig.txt)");
@@ -30,9 +30,14 @@ int main() {
 
     //core::printGameConfig(*config);
 
-    cli::Interface interface = cli::Interface(R"(C:\Sync\CS\Projects\CLionProjects\LightSong\reference\games\Ever17\s60v5\Ever17)");
+    cli::Interface interface = cli::Interface(R"(C:\LightSong\reference\games\Ever17\s60v5\Ever17)");
 
     for(int i=0;i<100;i++) {
+        interface.tick(0);
+        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // wait key
+    }
+
+    while (true) {
         interface.tick(0);
         std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // wait key
     }

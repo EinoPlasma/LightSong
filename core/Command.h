@@ -235,7 +235,7 @@ namespace core {
 
         explicit CommandChara(const std::vector<std::string>& params) {
             // Parse the parameters and populate the charaInfos vector
-            for (size_t i = 0; i < params.size(); i += 4) {
+            for (size_t i = 0; i < params.size() - 1; i += 4) {
                 CharaInfo charaInfo;
                 charaInfo.charaID = std::stoi(params[i]);
                 charaInfo.filename = params[i + 1];
@@ -635,7 +635,7 @@ namespace core {
         CommandType type() override { return IF_GOTO; }
 
         explicit CommandIfGoto(const std::vector<std::string>& params) {
-            if (params.size() >= 2) {
+            if (params.size() == 2) {
                 condition_literal = params[0];
                 std::string condition_operator;
                 if (condition_literal.find("!=") != std::string::npos) {

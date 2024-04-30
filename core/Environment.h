@@ -25,7 +25,7 @@ namespace core {
 
     struct CallStackItem {
         std::string script_path;
-        std::string line_number; // This line_number is the `currLineNumber` defined in Parser, not the number of lines in the script source file.
+        unsigned int line_number; // This line_number is the `currLineNumber` defined in Parser, not the number of lines in the script source file.
     };
 
     class Environment {
@@ -33,7 +33,7 @@ namespace core {
         std::unordered_map<std::string, int> variables;
         std::stack<CallStackItem> call_stack;
     public:
-        Environment(const CallStackItem& initial_call_stack_item);
+        explicit Environment(CallStackItem initial_call_stack_item);
         void set(const std::string &var_name, const std::string &var_value);
         void rand(const std::string &var_name, unsigned int min_value, unsigned int max_value);
         void add(const std::string &var_name, const std::string &value, bool flagSub);
@@ -41,7 +41,7 @@ namespace core {
 
         int getVar(const std::string &var_name);
         bool varExists(const std::string &var_name);
-        void pushCallStack(const CallStackItem& item);
+        void pushCallStack(CallStackItem item);
         CallStackItem popCallStack();
     };
 

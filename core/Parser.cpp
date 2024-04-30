@@ -28,6 +28,7 @@ namespace core {
     }
 
     std::unique_ptr<Command> Parser::peek(unsigned int line_number) {
+        // TODO: 在遇到语句"#if F58=2, goto TEST_LABEL_002"的时候分割错误，没有把正确的params传给上级。在其他那种不只有一个空格的语句也会有这个问题。
         std::string& line = lines[line_number];
         std::stringstream ss, ss_params;
         ss << line;
@@ -35,6 +36,10 @@ namespace core {
         std::string params_literal;
         ss >> type_literal;
         ss >> params_literal;
+//
+//        // Read the remaining contents of ss into params_literal
+//        std::getline(ss, params_literal);
+//        params_literal = params_literal.substr(params_literal.find_first_not_of(' '));
 
         ss_params << params_literal;
 
