@@ -11,6 +11,8 @@ namespace core {
         switch (type) {
             case UNKNOWN:
                 return std::make_unique<CommandUnknown>();
+            case BROKEN:
+                return std::make_unique<CommandBroken>();
             case SAY:
                 return std::make_unique<CommandSay>(params);
             case TEXT:
@@ -116,8 +118,9 @@ namespace core {
             case CONFIG:
                 return std::make_unique<CommandConfig>();
             default:
+                throw std::runtime_error("Invalid command type when createCommand().");
                 break;
         }
-        return nullptr;  // Return nullptr if the Command type and parameters are invalid
+        // return nullptr;  // Return nullptr if the Command type and parameters are invalid
     }
 } // core

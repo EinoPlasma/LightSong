@@ -28,36 +28,40 @@ namespace core {
     }
 
     std::unique_ptr<Command> Parser::peek(unsigned int line_number) {
-        // TODO: 在遇到语句"#if F58=2, goto TEST_LABEL_002"的时候分割错误，没有把正确的params传给上级。在其他那种不只有一个空格的语句也会有这个问题。
         std::string& line = lines[line_number];
-        std::stringstream ss, ss_params;
-        ss << line;
+        std::stringstream ss(line);
         std::string type_literal;
         std::string params_literal;
-        ss >> type_literal;
-        ss >> params_literal;
-//
-//        // Read the remaining contents of ss into params_literal
-//        std::getline(ss, params_literal);
-//        params_literal = params_literal.substr(params_literal.find_first_not_of(' '));
 
-        ss_params << params_literal;
+        ss >> type_literal;
+        std::getline(ss, params_literal);
+        if (params_literal.find_first_not_of(' ') != -1){
+            // 如果有空格就把空格跳掉
+            params_literal = params_literal.substr(params_literal.find_first_not_of(' '));
+        }
 
         CommandType type = UNKNOWN;
         auto it = command_type_map.find(type_literal);
-        if (it == command_type_map.end()) {
-            return createCommand(type, std::vector<std::string>());
+        if (it != command_type_map.end()) {
+            type = it->second;
         }
-        // type = it->second;
-        // type = command_type_map[type_literal]; /* error: since command_type_map is a const unordered_map, it does not support [] operator.
-        type = command_type_map.at(type_literal); /* it's okay to write like this*/
 
         std::vector<std::string> params;
+        std::stringstream ss_params(params_literal);
         std::string param;
         while (std::getline(ss_params, param, ',')) {
             params.push_back(param);
         }
-        return createCommand(type, params);
+
+        std::unique_ptr<Command> res;
+        try {
+            res = createCommand(type, params);
+        } catch (const std::invalid_argument& e) {
+            // TODO: 错误处理
+            std::cerr << "Exception occurred: BROKEN Command: " << e.what() << std::endl;
+            res = createCommand(BROKEN, std::vector<std::string>());
+        }
+        return res;
     }
 
 

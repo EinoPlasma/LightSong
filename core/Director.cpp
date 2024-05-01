@@ -26,6 +26,8 @@ namespace core {
 
             if (type == UNKNOWN) {
                 // UNKNOWN case
+            } if (type == BROKEN) {
+                // BROKEN case
             } else if (type == SAY) {
                 auto targetCmd = dynamic_cast<CommandSay*>(cmd.get()); // 因为cmd(Command对象)没有name、content等成员，所以我们需要用动态类型转换，转成CommandSay对象
                 return std::make_unique<cli::CliCommandEcho>(targetCmd->name + targetCmd->content);
@@ -145,7 +147,7 @@ namespace core {
                     right_value = std::stoi(right_operand);
                 }
 
-                if (flagIgnoreThisCommand) {
+                if (!flagIgnoreThisCommand) {
                     // 根据比较类型执行相应的操作
                     bool condition_met = false;
                     switch (comparison_type) {

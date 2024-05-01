@@ -10,12 +10,15 @@
 #include <unordered_map>
 #include <memory>
 #include <sstream>
+#include <cassert>
+#include <iostream>
 
 namespace core {
 
     enum CommandType {
         // ENDOFFILE, /* 读到文件末尾直接返回一个ENDOFFILE给上级处理，或者是让上级自己检查有没有EOF，哪一种更好呢？
         // BLANK, /* Deprecated, since all the lines not begins with '#' will be discord when Parser()*/
+        BROKEN, // command name is valid but params are invalid
         UNKNOWN,
         // 1. dialogue / text
         SAY,
@@ -136,6 +139,11 @@ namespace core {
         virtual CommandType type() = 0;
     };
 
+    class CommandBroken : public Command {
+    public:
+        CommandType type() override { return BROKEN; }
+    };
+
     class CommandUnknown : public Command {
     public:
         CommandType type() override { return UNKNOWN; }
@@ -150,7 +158,10 @@ namespace core {
         CommandType type() override { return SAY; }
 
         explicit CommandSay(const std::vector<std::string>& params) {
-            if (params.size() >= 2) {
+            if (params.size() != 2 && params.size() != 1) {
+                throw std::invalid_argument("Invalid parameter size. Expected 2 or 1 parameters.");
+            }
+            if (params.size() == 2) {
                 name = params[0];
                 content = params[1];
                 flag_contains_name = true;
@@ -172,6 +183,9 @@ namespace core {
         CommandType type() override { return TEXT; }
 
         explicit CommandText(const std::vector<std::string>& params) {
+            if (params.size() != 7 && params.size() != 8) {
+                throw std::invalid_argument("Invalid parameter size. Expected 7 or 8 parameters.");
+            }
             if (params.size() >= 7) {
                 content = params[0];
                 x1 = std::stoi(params[1]);
@@ -206,9 +220,10 @@ namespace core {
         CommandType type() override { return TITLE; }
 
         explicit CommandTitle(const std::vector<std::string>& params) {
-            if (!params.empty()) {
-                content = params[0];
+            if (params.size() != 1) {
+                throw std::invalid_argument("Invalid parameter size. Expected 1 parameter.");
             }
+            content = params[0];
         }
     };
 
@@ -234,6 +249,9 @@ namespace core {
         CommandType type() override { return CHARA; }
 
         explicit CommandChara(const std::vector<std::string>& params) {
+            if ((params.size() - 1) % 4 == 0) {
+                throw std::invalid_argument("Invalid parameter size. Expected (params.size() - 1) % 4 == 0 parameters.");
+            }
             // Parse the parameters and populate the charaInfos vector
             for (size_t i = 0; i < params.size() - 1; i += 4) {
                 CharaInfo charaInfo;
@@ -255,6 +273,9 @@ namespace core {
         CommandType type() override { return CHARA_CLS; }
 
         explicit CommandCharaCls(const std::vector<std::string>& params) {
+            if (params.size() != 1 && params.size() != 2) {
+                throw std::invalid_argument("Invalid parameter size. Expected 1 or 2 parameters.");
+            }
             charaID = (params[0] == "a") ? -1 : std::stoi(params[0]);
             time = (params.size() > 1) ? std::stoi(params[1]) : 300;
         }
@@ -270,6 +291,9 @@ namespace core {
         CommandType type() override { return CHARA_POS; }
 
         explicit CommandCharaPos(const std::vector<std::string>& params) {
+            if (params.size() != 4) {
+                throw std::invalid_argument("Invalid parameter size. Expected 4 parameters.");
+            }
             charaID = std::stoi(params[0]);
             new_x = std::stoi(params[1]);
             new_y = std::stoi(params[2]);
@@ -288,11 +312,26 @@ namespace core {
         CommandType type() override { return BG; }
 
         explicit CommandBg(const std::vector<std::string>& params) {
+            if (params.size() != 1 && params.size() != 3 && params.size() != 5) {
+                throw std::invalid_argument("Invalid parameter size. Expected 1 or 3 or 5 parameters.");
+            }
             filename = params[0];
-            transition = (params.size() > 1) ? params[1] : "BG_ALPHA";
-            time = (params.size() > 2) ? std::stoi(params[2]) : 300;
-            x = (params.size() > 3) ? std::stoi(params[3]) : 0;
-            y = (params.size() > 4) ? std::stoi(params[4]) : 0;
+
+            x = 0; // Default x
+            y = 0; // Default y
+            transition = "BG_ALPHA"; // Default transition
+            time = 300; // Default time
+
+            if (params.size() == 3) {
+                transition = params[1];
+                time = std::stoi(params[2]);
+            }
+            if (params.size() == 5) {
+                transition = params[1];
+                time = std::stoi(params[2]);
+                x = std::stoi(params[3]);
+                y = std::stoi(params[4]);
+            }
         }
     };
 
@@ -304,6 +343,9 @@ namespace core {
         CommandType type() override { return FLASH; }
 
         explicit CommandFlash(const std::vector<std::string>& params) {
+            if (params.size() != 2) {
+                throw std::invalid_argument("Invalid parameter size. Expected 2 parameters.");
+            }
             color = params[0];
             time = std::stoi(params[1]);
         }
@@ -322,6 +364,9 @@ namespace core {
         CommandType type() override { return FADE_OUT; }
 
         explicit CommandFadeOut(const std::vector<std::string>& params) {
+            if (params.size() != 2) {
+                throw std::invalid_argument("Invalid parameter size. Expected 2 parameters.");
+            }
             color = params[0];
             time = std::stoi(params[1]);
         }
@@ -334,6 +379,9 @@ namespace core {
         CommandType type() override { return FADE_IN; }
 
         explicit CommandFadeIn(const std::vector<std::string>& params) {
+            if (params.size() != 1) {
+                throw std::invalid_argument("Invalid parameter size. Expected 1 parameter.");
+            }
             time = std::stoi(params[0]);
         }
     };
@@ -345,6 +393,9 @@ namespace core {
         CommandType type() override { return MOVIE; }
 
         explicit CommandMovie(const std::vector<std::string>& params) {
+            if (params.size() != 1) {
+                throw std::invalid_argument("Invalid parameter size. Expected 1 parameter.");
+            }
             filename = params[0];
         }
     };
@@ -357,6 +408,9 @@ namespace core {
         CommandType type() override { return TEXTBOX; }
 
         explicit CommandTextBox(const std::vector<std::string>& params) {
+            if (params.size() != 2) {
+                throw std::invalid_argument("Invalid parameter size. Expected 2 parameters.");
+            }
             messageFilename = params[0];
             nameFilename = params[1];
         }
@@ -413,6 +467,9 @@ namespace core {
         CommandType type() override { return SCROLL; }
 
         explicit CommandScroll(const std::vector<std::string>& params) {
+            if (params.size() != 6) {
+                throw std::invalid_argument("Invalid parameter size. Expected 6 parameters.");
+            }
             filename = params[0];
             startx = std::stod(params[1]);
             starty = std::stod(params[2]);
@@ -432,6 +489,10 @@ namespace core {
         CommandType type() override { return CHARA_Y; }
 
         explicit CommandCharaY(const std::vector<std::string>& params) {
+            if ((params.size() - 2) % 5 == 0) {
+                throw std::invalid_argument("Invalid parameter size. Expected (params.size() - 2) % 5 == 0 parameters.");
+            }
+
             coordMode = std::stoi(params[0]);
 
             int paramCount = params.size();
@@ -466,6 +527,9 @@ namespace core {
         CommandType type() override { return CHARA_SCROLL; }
 
         explicit CommandCharaScroll(const std::vector<std::string>& params) {
+            if (params.size() != 6 && params.size() != 10) {
+                throw std::invalid_argument("Invalid parameter size. Expected 6 or 10 parameters.");
+            }
             coordMode = std::stoi(params[0]);
             charaID = std::stoi(params[1]);
             int paramCount = params.size();
@@ -499,14 +563,15 @@ namespace core {
         CommandType type() override { return ANIME_ON; }
 
         explicit CommandAnimeOn(const std::vector<std::string>& params) {
-            if (params.size() >= 6) {
-                num = std::stoi(params[0]);
-                filename = params[1];
-                x = std::stoi(params[2]);
-                y = std::stoi(params[3]);
-                interval = std::stoi(params[4]);
-                isloop = std::stoi(params[5]);
+            if (params.size() != 6) {
+                throw std::invalid_argument("Invalid parameter size. Expected 6parameters.");
             }
+            num = std::stoi(params[0]);
+            filename = params[1];
+            x = std::stoi(params[2]);
+            y = std::stoi(params[3]);
+            interval = std::stoi(params[4]);
+            isloop = std::stoi(params[5]);
         }
     };
 
@@ -517,9 +582,10 @@ namespace core {
         CommandType type() override { return ANIME_OFF; }
 
         explicit CommandAnimeOff(const std::vector<std::string>& params) {
-            if (!params.empty()) {
-                filename = params[0];
+            if (params.size() != 1) {
+                throw std::invalid_argument("Invalid parameter size. Expected 1 parameters.");
             }
+            filename = params[0];
         }
     };
 
@@ -528,19 +594,23 @@ namespace core {
         int charaID;
         int period;
         int loop_num;
-        std::vector<int> offsets;
+        std::vector<std::pair<int, int>> offsets;
 
         CommandType type() override { return CHARA_ANIME; }
 
         explicit CommandCharaAnime(const std::vector<std::string>& params) {
-            if (params.size() >= 3) {
-                charaID = std::stoi(params[0]);
-                period = std::stoi(params[1]);
-                loop_num = std::stoi(params[2]);
+            if (params.size() < 3) {
+                throw std::invalid_argument("Invalid parameter size. Expected at least 3 parameters.");
+            }
 
-                for (size_t i = 3; i < params.size(); i++) {
-                    offsets.push_back(std::stoi(params[i]));
-                }
+            charaID = std::stoi(params[0]);
+            period = std::stoi(params[1]);
+            loop_num = std::stoi(params[2]);
+
+            for (int i = 3; i < params.size(); i += 2) {
+                int offset_x = std::stoi(params[i]);
+                int offset_y = std::stoi(params[i + 1]);
+                offsets.emplace_back(offset_x, offset_y);
             }
         }
     };
@@ -554,10 +624,11 @@ namespace core {
         CommandType type() override { return SET; }
 
         explicit CommandSet(const std::vector<std::string>& params) {
-            if (params.size() >= 2) {
-                var_name = params[0];
-                var_value = params[1];
+            if (params.size() != 2) {
+                throw std::invalid_argument("Invalid parameter size. Expected 2 parameters.");
             }
+            var_name = params[0];
+            var_value = params[1];
         }
     };
 
@@ -569,10 +640,11 @@ namespace core {
         CommandType type() override { return ADD; }
 
         explicit CommandAdd(const std::vector<std::string>& params) {
-            if (params.size() >= 2) {
-                var_name = params[0];
-                add_value = params[1];
+            if (params.size() != 2) {
+                throw std::invalid_argument("Invalid parameter size. Expected 2 parameters.");
             }
+            var_name = params[0];
+            add_value = params[1];
         }
     };
 
@@ -584,10 +656,12 @@ namespace core {
         CommandType type() override { return SUB; }
 
         explicit CommandSub(const std::vector<std::string>& params) {
-            if (params.size() >= 2) {
-                var_name = params[0];
-                sub_value = params[1];
+            if (params.size() != 2) {
+                throw std::invalid_argument("Invalid parameter size. Expected 2 parameters.");
             }
+            var_name = params[0];
+            sub_value = params[1];
+
         }
     };
 
@@ -598,9 +672,10 @@ namespace core {
         CommandType type() override { return LABEL; }
 
         explicit CommandLabel(const std::vector<std::string>& params) {
-            if (params.size() >= 1) {
-                label_name = params[0];
+            if (params.size() != 1) {
+                throw std::invalid_argument("Invalid parameter size. Expected 1 parameter.");
             }
+            label_name = params[0];
         }
     };
 
@@ -611,9 +686,11 @@ namespace core {
         CommandType type() override { return GOTO; }
 
         explicit CommandGoto(const std::vector<std::string>& params) {
-            if (params.size() >= 1) {
-                label_name = params[0];
+            if (params.size() != 1) {
+                throw std::invalid_argument("Invalid parameter size. Expected 1 parameter.");
             }
+            label_name = params[0];
+
         }
     };
 
@@ -635,39 +712,40 @@ namespace core {
         CommandType type() override { return IF_GOTO; }
 
         explicit CommandIfGoto(const std::vector<std::string>& params) {
-            if (params.size() == 2) {
-                condition_literal = params[0];
-                std::string condition_operator;
-                if (condition_literal.find("!=") != std::string::npos) {
-                    comparison_type = NOT_EQUAL;
-                    condition_operator = "!=";
-                } else if (condition_literal.find(">=") != std::string::npos) {
-                    comparison_type = GREATER_THAN_OR_EQUAL;
-                    condition_operator = ">=";
-                } else if (condition_literal.find("<=") != std::string::npos) {
-                    comparison_type = LESS_THAN_OR_EQUAL;
-                    condition_operator = "<=";
-                } else if (condition_literal.find('=') != std::string::npos) {
-                    comparison_type = EQUAL;
-                    condition_operator = "=";
-                } else if (condition_literal.find('>') != std::string::npos) {
-                    comparison_type = GREATER_THAN;
-                    condition_operator = ">";
-                } else if (condition_literal.find('<') != std::string::npos) {
-                    comparison_type = LESS_THAN;
-                    condition_operator = "<";
-                }
-
-                size_t operator_pos = condition_literal.find(condition_operator);
-                left_operand = condition_literal.substr(0, operator_pos);
-                right_operand = condition_literal.substr(operator_pos + condition_operator.length());
-
-                std::string goto_command_literal = params[1], foo;
-                std::stringstream goto_command_stream;
-                goto_command_stream << goto_command_literal;
-                goto_command_stream >> foo; // eat "goto"
-                goto_command_stream >> label_name;
+            if (params.size() != 2) {
+                throw std::invalid_argument("Invalid parameter size. Expected 2 parameters.");
             }
+            condition_literal = params[0];
+            std::string condition_operator;
+            if (condition_literal.find("!=") != std::string::npos) {
+                comparison_type = NOT_EQUAL;
+                condition_operator = "!=";
+            } else if (condition_literal.find(">=") != std::string::npos) {
+                comparison_type = GREATER_THAN_OR_EQUAL;
+                condition_operator = ">=";
+            } else if (condition_literal.find("<=") != std::string::npos) {
+                comparison_type = LESS_THAN_OR_EQUAL;
+                condition_operator = "<=";
+            } else if (condition_literal.find('=') != std::string::npos) {
+                comparison_type = EQUAL;
+                condition_operator = "=";
+            } else if (condition_literal.find('>') != std::string::npos) {
+                comparison_type = GREATER_THAN;
+                condition_operator = ">";
+            } else if (condition_literal.find('<') != std::string::npos) {
+                comparison_type = LESS_THAN;
+                condition_operator = "<";
+            }
+
+            size_t operator_pos = condition_literal.find(condition_operator);
+            left_operand = condition_literal.substr(0, operator_pos);
+            right_operand = condition_literal.substr(operator_pos + condition_operator.length());
+
+            std::string goto_command_literal = params[1], foo;
+            std::stringstream goto_command_stream;
+            goto_command_stream << goto_command_literal;
+            goto_command_stream >> foo; // eat "goto"
+            goto_command_stream >> label_name;
         }
     };
 
@@ -678,9 +756,10 @@ namespace core {
         CommandType type() override { return CHANGE; }
 
         explicit CommandChange(const std::vector<std::string>& params) {
-            if (params.size() >= 1) {
-                filename = params[0];
+            if (params.size() != 1) {
+                throw std::invalid_argument("Invalid parameter size. Expected 1 parameter.");
             }
+            filename = params[0]; // filename：脚本文件名，**不加扩展名**
         }
     };
 
@@ -691,7 +770,10 @@ namespace core {
         CommandType type() override { return CALL; }
 
         explicit CommandCall(const std::vector<std::string>& params) {
-            filename = params[0];
+            if (params.size() != 1) {
+                throw std::invalid_argument("Invalid parameter size. Expected 1 parameter.");
+            }
+            filename = params[0]; // filename：脚本文件名，**不加扩展名**
         }
     };
 
@@ -709,6 +791,11 @@ namespace core {
         CommandType type() override { return SEL; }
 
         explicit CommandSel(const std::vector<std::string>& params) {
+            if (false) {
+                throw std::invalid_argument("Invalid parameter size. Expected 2 parameters.");
+            }
+            // TODO: CommandSel的跨行处理
+            std::cerr << "TODO: CommandSel的跨行处理" << std::endl;
             choiceNum = std::stoi(params[0]);
             if (params.size() > 1)
                 hintPic = params[1];
@@ -730,6 +817,9 @@ namespace core {
 
         explicit CommandSelectText(const std::vector<std::string>& params) {
             choiceNum = std::stoi(params[0]);
+            if (params.size() != choiceNum + 6) {
+                throw std::invalid_argument("Invalid parameter size. Expected `choiceNum + 6` parameters.");
+            }
             for (int i = 1; i <= choiceNum; i++) {
                 choiceTexts.push_back(params[i]);
             }
@@ -755,19 +845,20 @@ namespace core {
         CommandType type() override { return SELECT_VAR; }
 
         explicit CommandSelectVar(const std::vector<std::string>& params) {
-            if (params.size() >= 8) {
-                choiceNum = std::stoi(params[0]);
-                for (int i = 1; i <= choiceNum; i++) {
-                    choices.push_back(params[i]);
-                    vars.push_back(params[i + choiceNum]);
-                }
-                x1 = std::stod(params[2 * choiceNum + 1]);
-                y1 = std::stod(params[2 * choiceNum + 2]);
-                x2 = std::stod(params[2 * choiceNum + 3]);
-                y2 = std::stod(params[2 * choiceNum + 4]);
-                color = params[2 * choiceNum + 5];
-                initPosition = std::stoi(params[2 * choiceNum + 6]);
+            choiceNum = std::stoi(params[0]);
+            if (params.size() != 2 * choiceNum + 6) {
+                throw std::invalid_argument("Invalid parameter size. Expected `2 * choiceNum + 6` parameters.");
             }
+            for (int i = 1; i <= choiceNum; i++) {
+                choices.push_back(params[i]);
+                vars.push_back(params[i + choiceNum]);
+            }
+            x1 = std::stod(params[2 * choiceNum + 1]);
+            y1 = std::stod(params[2 * choiceNum + 2]);
+            x2 = std::stod(params[2 * choiceNum + 3]);
+            y2 = std::stod(params[2 * choiceNum + 4]);
+            color = params[2 * choiceNum + 5];
+            initPosition = std::stoi(params[2 * choiceNum + 6]);
         }
     };
 
@@ -783,6 +874,9 @@ namespace core {
         CommandType type() override { return SELECT_IMG; }
 
         explicit CommandSelectImg(const std::vector<std::string>& params) {
+            if (params.size() < 4) {
+                throw std::invalid_argument("Invalid parameter size. Expected `see document` parameters.");
+            }
             if (params.size() >= 4) {
                 choiceNum = std::stoi(params[0]);
                 filename = params[1];
@@ -812,6 +906,9 @@ namespace core {
 
         explicit CommandSelectImgs(const std::vector<std::string>& params) {
             choiceNum = std::stoi(params[0]);
+            if (params.size() != choiceNum * 4 + 1) {
+                throw std::invalid_argument("Invalid parameter size. Expected `choiceNum * 4 + 1` parameters.");
+            }
             for (int i = 0; i < choiceNum; i++) {
                 filenames.push_back(params[i * 4 + 1]);
                 xCoords.push_back(std::stod(params[i * 4 + 2]));
@@ -829,6 +926,9 @@ namespace core {
         CommandType type() override { return WAIT; }
 
         explicit CommandWait(const std::vector<std::string>& params) {
+            if (params.size() != 1) {
+                throw std::invalid_argument("Invalid parameter size. Expected 1 parameter.");
+            }
             time = std::stoi(params[0]);
         }
     };
@@ -847,6 +947,9 @@ namespace core {
         CommandType type() override { return RAND; }
 
         explicit CommandRand(const std::vector<std::string>& params) {
+            if (params.size() != 3) {
+                throw std::invalid_argument("Invalid parameter size. Expected 3 parameters.");
+            }
             varName = params[0];
             minValue = std::stoi(params[1]);
             maxValue = std::stoi(params[2]);
@@ -861,6 +964,9 @@ namespace core {
         CommandType type() override { return BGM; }
 
         explicit CommandBgm(const std::vector<std::string>& params) {
+            if (params.size() != 2 && params.size() != 1) {
+                throw std::invalid_argument("Invalid parameter size. Expected 2 or 1 parameters.");
+            }
             filename = params[0];
             if (params.size() > 1) {
                 isLoop = (params[1] == "1");
@@ -883,6 +989,9 @@ namespace core {
         CommandType type() override { return SE; }
 
         explicit CommandSe(const std::vector<std::string>& params) {
+            if (params.size() != 2 && params.size() != 1) {
+                throw std::invalid_argument("Invalid parameter size. Expected 2 or 1 parameters.");
+            }
             filename = params[0];
             if (params.size() > 1) {
                 isLoop = (params[1] == "1");
@@ -904,7 +1013,10 @@ namespace core {
         CommandType type() override { return VO; }
 
         explicit CommandVo(const std::vector<std::string>& params) {
-            filename = params[0];
+            if (params.size() != 1) {
+                throw std::invalid_argument("Invalid parameter size. Expected 1 parameter.");
+            }
+            filename = params[0]; // 音频文件名，不加扩展名
         }
     };
 
@@ -915,6 +1027,9 @@ namespace core {
         CommandType type() override { return LOAD; }
 
         explicit CommandLoad(const std::vector<std::string>& params) {
+            if (!params.empty() && params.size() != 1) {
+                throw std::invalid_argument("Invalid parameter size. Expected 0 or 1 parameters.");
+            }
             if (params.empty()) {
                 saveNum = -1;  // Load save screen
             } else {
@@ -930,6 +1045,9 @@ namespace core {
         CommandType type() override { return ALBUM; }
 
         explicit CommandAlbum(const std::vector<std::string>& params) {
+            if (!params.empty() && params.size() != 1) {
+                throw std::invalid_argument("Invalid parameter size. Expected 0 or 1 parameters.");
+            }
             if (params.empty()) {
                 albumListFilename = "album_list.txt";  // Default album list filename
             } else {
@@ -953,14 +1071,20 @@ namespace core {
         CommandType type() override { return DATE; }
 
         explicit CommandDate(const std::vector<std::string>& params) {
-            if (params.empty()) {
-                dateBg = "";  // No background image
+            if (params.size() != 3 && params.size() != 4) {
+                throw std::invalid_argument("Invalid parameter size. Expected 3 or 4 parameters.");
+            }
+            // TODO: 和文档与原版实现对比确认此处实现无误
+            if (params.size() == 3) {
+                x = std::stoi(params[0]);
+                y = std::stoi(params[1]);
+                color = params[2];
             } else {
                 dateBg = params[0];
+                x = std::stoi(params[1]);
+                y = std::stoi(params[2]);
+                color = params[3];
             }
-            x = std::stoi(params[1]);
-            y = std::stoi(params[2]);
-            color = params[3];
         }
     };
 
