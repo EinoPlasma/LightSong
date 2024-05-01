@@ -26,9 +26,11 @@ namespace core {
             std::unique_ptr<Command> cmd = parser->peek(environment->curr_script_line_number++);
             CommandType type = cmd->type();
 
-            if (type == UNKNOWN) {
+            if (type == BLANK) {
+                // BLANK case
+            } else if (type == UNKNOWN) {
                 // UNKNOWN case
-            } if (type == BROKEN) {
+            } else if (type == BROKEN) {
                 // BROKEN case
             } else if (type == SAY) {
                 auto targetCmd = dynamic_cast<CommandSay*>(cmd.get()); // 因为cmd(Command对象)没有name、content等成员，所以我们需要用动态类型转换，转成CommandSay对象
@@ -106,7 +108,7 @@ namespace core {
                 // 跳转到当前脚本里指定的行标签
                 auto targetCmd = dynamic_cast<CommandGoto*>(cmd.get());
                 environment->curr_script_line_number = parser->findLabel(targetCmd->label_name);
-            } if (type == IF_GOTO) {
+            } else if (type == IF_GOTO) {
                 bool flagIgnoreThisCommand = false; // 如果右操作数为变量且变量未被赋值过，系统会忽略这条 if 语句。
 
                 auto targetCmd = dynamic_cast<CommandIfGoto*>(cmd.get());
@@ -189,6 +191,17 @@ namespace core {
                 parser = std::move(loadScript(root_path + PATH_DIR_SCRIPT + environment->curr_script_name + CONFIG_SCRITP_SUFFIX));
             } else if (type == SEL) {
                 // SEL case
+                auto targetCmd = dynamic_cast<CommandSel*>(cmd.get());
+                unsigned int choice_num = targetCmd->choiceNum;
+                std::vector<std::string> choices;
+                for (unsigned int i = 0; i < choice_num; i++) {
+                    auto choice_line = parser->peek(environment->curr_script_line_number++);
+                    if (choice_line->type() != BLANK) {
+                        throw std::runtime_error("Expected BLANK line after #sel command");
+                    }
+                    std::string choice_text = dynamic_cast<CommandBlank*>(choice_line.get())->command_literal;
+                    choices.push_back(choice_text);
+                }
             } else if (type == SELECT_TEXT) {
                 // SELECT_TEXT case
             } else if (type == SELECT_VAR) {
@@ -225,6 +238,8 @@ namespace core {
                 // CONFIG case
             } else {
                 // Default case
+                throw std::runtime_error("Unknown command type: " + std::to_string(type));
+                // std::cerr << "Unknown command type: " << type << std::endl;
             }
         }
 

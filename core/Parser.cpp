@@ -21,9 +21,11 @@ namespace core {
             }
 
             // discard the lines that do not start with '#'
-            if (!line.empty() && line[0] == '#') {
-                lines.push_back(line);
-            }
+            // if (!line.empty() && line[0] == '#') {
+            //     lines.push_back(line);
+            // }
+
+            lines.push_back(line);
         }
 
         // make labelMap
@@ -40,6 +42,11 @@ namespace core {
 
     std::unique_ptr<Command> Parser::peek(unsigned int line_number) {
         std::string& line = lines[line_number];
+        if (line.empty() || line[0] != '#') {
+            // return BLANK if the line is empty or not a command
+            return createCommand(BLANK, std::vector<std::string>({line}));
+        }
+
         std::stringstream ss(line);
         std::string type_literal;
         std::string params_literal;

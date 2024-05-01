@@ -17,7 +17,8 @@ namespace core {
 
     enum CommandType {
         // ENDOFFILE, /* 读到文件末尾直接返回一个ENDOFFILE给上级处理，或者是让上级自己检查有没有EOF，哪一种更好呢？
-        // BLANK, /* Deprecated, since all the lines not begins with '#' will be discord when Parser()*/
+        // It was deleted and now added back, because the #sel command is multi-line, so we can't delete all lines that don't start with # during preprocessing, so we need to mark these lines with BLANK
+        BLANK, /* Deprecated, since all the lines not begins with '#' will be discord when Parser()*/
         BROKEN, // command name is valid but params are invalid
         UNKNOWN,
         // 1. dialogue / text
@@ -137,6 +138,21 @@ namespace core {
     class Command {
     public:
         virtual CommandType type() = 0;
+    };
+
+    class CommandBlank : public Command {
+    public:
+        std::string command_literal;
+
+        CommandType type() override { return BLANK; }
+
+        explicit CommandBlank(const std::vector<std::string>& params) {
+            // It takes only one parameter for record the command_literal
+            if (params.size() != 1) {
+                throw std::invalid_argument("Invalid parameter size. Expected 1 parameter.");
+            }
+            this->command_literal = params[0];
+        }
     };
 
     class CommandBroken : public Command {
@@ -784,23 +800,20 @@ namespace core {
 
     class CommandSel : public Command {
     public:
-        int choiceNum;
+        unsigned int choiceNum;
         std::string hintPic;
         std::vector<std::string> choiceTexts;
 
         CommandType type() override { return SEL; }
 
         explicit CommandSel(const std::vector<std::string>& params) {
-            if (false) {
-                throw std::invalid_argument("Invalid parameter size. Expected 2 parameters.");
+            if (params.size() != 1 && params.size() != 2) {
+                throw std::invalid_argument("Invalid parameter size. Expected 1 or 2 parameters.");
             }
             // TODO: CommandSel的跨行处理
-            std::cerr << "TODO: CommandSel的跨行处理" << std::endl;
             choiceNum = std::stoi(params[0]);
-            if (params.size() > 1)
+            if (params.size() > 1){
                 hintPic = params[1];
-            for (int i = 2; i < params.size(); i++) {
-                choiceTexts.push_back(params[i]);
             }
         }
     };
