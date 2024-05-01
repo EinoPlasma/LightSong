@@ -1094,7 +1094,7 @@ namespace core {
     };
 
     // Factory function to create a Command object based on the provided Command type and parameters
-    std::unique_ptr<Command> createCommand(CommandType type, const std::vector<std::string>& params);
+    std::unique_ptr<Command> createCommand(CommandType type,const std::vector<std::string>& params);
 
 } // core
 

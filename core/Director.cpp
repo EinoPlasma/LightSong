@@ -102,23 +102,8 @@ namespace core {
                 // LABEL case
             } else if (type == GOTO) {
                 // 跳转到当前脚本里指定的行标签
-                bool flagFoundLabel = false;
                 auto targetCmd = dynamic_cast<CommandGoto*>(cmd.get());
-                std::string targetLabel = targetCmd->label_name;
-                for(int i=0; i < parser->getLineCount(); i++){
-                    if (parser->peek(i)->type() == LABEL) {
-                        auto cmd_label = dynamic_cast<CommandLabel*>(parser->peek(i).get());
-                        if (cmd_label->label_name == targetLabel) {
-                            parser->setCurrLineNumber(i);
-                            flagFoundLabel = true;
-                        }
-                    }
-                }
-                if (!flagFoundLabel){
-                    raise(-1);
-                    std::cerr << "goto a invalid label";
-                    // TODO: 错误处理
-                }
+                parser->jumpToLabel(targetCmd->label_name);
             } if (type == IF_GOTO) {
                 bool flagIgnoreThisCommand = false; // 如果右操作数为变量且变量未被赋值过，系统会忽略这条 if 语句。
 
@@ -177,22 +162,7 @@ namespace core {
                     if (condition_met) {
                         // 跳转到指定的行（标签）
                         // TODO: 这里的goto代码是上面GOTO的case复制过来的，导致代码重复了，得想办法不要重复
-                        bool flagFoundLabel = false;
-                        std::string targetLabel = targetCmd->label_name;
-                        for(int i=0; i < parser->getLineCount(); i++){
-                            if (parser->peek(i)->type() == LABEL) {
-                                auto cmd_label = dynamic_cast<CommandLabel*>(parser->peek(i).get());
-                                if (cmd_label->label_name == targetLabel) {
-                                    parser->setCurrLineNumber(i);
-                                    flagFoundLabel = true;
-                                }
-                            }
-                        }
-                        if (!flagFoundLabel){
-                            raise(-1);
-                            std::cerr << "goto a invalid label";
-                            // TODO: 错误处理
-                        }
+                        parser->jumpToLabel(targetCmd->label_name);
                     }
                 }
 
