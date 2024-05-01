@@ -8,8 +8,11 @@
 #include <string>
 
 const std::string PATH_FILE_GAMECONFIG = "/gameconfig.txt";
+
+const std::string CONFIG_SCRITP_SUFFIX = ".txt";
 const std::string PATH_DIR_SCRIPT = "/script/";
-const std::string PATH_FILE_SCRIPT_START = "start.txt";
+const std::string SCRIPT_NAME_START = "start";
+
 
 
 

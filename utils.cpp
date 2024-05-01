@@ -13,9 +13,7 @@ std::string readUtf8File(const std::string& file_path) {
         file.close();
         return buffer.str();
     }
-    raise(-1);
-    // failed to read
-    // return "";
+    throw std::runtime_error("failed to readUtf8File(\"" + file_path + "\"");
 }
 
 bool isIdentifier(const std::string& str) {

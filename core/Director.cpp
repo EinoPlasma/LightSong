@@ -13,15 +13,17 @@
 namespace core {
     Director::Director(std::basic_string<char> root_path): root_path(root_path) {
         config = loadGameConfig(root_path + PATH_FILE_GAMECONFIG);
-        parser = loadScript(root_path + PATH_DIR_SCRIPT + PATH_FILE_SCRIPT_START);
-        CallStackItem initial_call_stack_item = CallStackItem{root_path + PATH_DIR_SCRIPT + PATH_FILE_SCRIPT_START, 0};
-        environment = std::make_unique<Environment>(initial_call_stack_item);
+        parser = loadScript(root_path + PATH_DIR_SCRIPT + SCRIPT_NAME_START + CONFIG_SCRITP_SUFFIX);
+
+        environment = std::make_unique<Environment>();
+        environment->curr_script_name = SCRIPT_NAME_START;
+        environment->curr_script_line_number = 0;
     }
 
     std::unique_ptr<cli::CliCommand> Director::nextCliCommand() {
         // 返回一个cli绘图指令（待定义）。cli每次做的事情就是问director要一个绘图指令，再执行它。director负责goto、if、change、select等流程控制
-        while (!parser->isEnd()) {
-            std::unique_ptr<Command> cmd = parser->next();
+        while (environment->curr_script_line_number < parser->getLineCount()) {
+            std::unique_ptr<Command> cmd = parser->peek(environment->curr_script_line_number++);
             CommandType type = cmd->type();
 
             if (type == UNKNOWN) {
@@ -103,7 +105,7 @@ namespace core {
             } else if (type == GOTO) {
                 // 跳转到当前脚本里指定的行标签
                 auto targetCmd = dynamic_cast<CommandGoto*>(cmd.get());
-                parser->jumpToLabel(targetCmd->label_name);
+                environment->curr_script_line_number = parser->findLabel(targetCmd->label_name);
             } if (type == IF_GOTO) {
                 bool flagIgnoreThisCommand = false; // 如果右操作数为变量且变量未被赋值过，系统会忽略这条 if 语句。
 
@@ -161,19 +163,30 @@ namespace core {
 
                     if (condition_met) {
                         // 跳转到指定的行（标签）
-                        // TODO: 这里的goto代码是上面GOTO的case复制过来的，导致代码重复了，得想办法不要重复
-                        parser->jumpToLabel(targetCmd->label_name);
+                        environment->curr_script_line_number = parser->findLabel(targetCmd->label_name);
                     }
                 }
 
             } else if (type == CHANGE) {
                 // 不带返回的脚本文件跳转。直接更换脚本文件
                 auto targetCmd = dynamic_cast<CommandChange*>(cmd.get());
-                parser = std::move(loadScript(root_path + PATH_DIR_SCRIPT + targetCmd->filename));
+                environment->curr_script_name = targetCmd->filename;
+                environment->curr_script_line_number = 0;
+                parser = std::move(loadScript(root_path + PATH_DIR_SCRIPT + targetCmd->filename + CONFIG_SCRITP_SUFFIX));
             } else if (type == CALL) {
                 // CALL case
+                auto targetCmd = dynamic_cast<CommandCall*>(cmd.get());
+                CallStackItem stackItem = CallStackItem{environment->curr_script_name, environment->curr_script_line_number};
+                environment->pushCallStack(stackItem);
+                environment->curr_script_name = targetCmd->filename;
+                environment->curr_script_line_number = 0;
+                parser = std::move(loadScript(root_path + PATH_DIR_SCRIPT + targetCmd->filename + CONFIG_SCRITP_SUFFIX));
             } else if (type == RET) {
                 // RET case
+                CallStackItem stackItem = environment->popCallStack();
+                environment->curr_script_name = stackItem.script_name;
+                environment->curr_script_line_number = stackItem.line_number;
+                parser = std::move(loadScript(root_path + PATH_DIR_SCRIPT + environment->curr_script_name + CONFIG_SCRITP_SUFFIX));
             } else if (type == SEL) {
                 // SEL case
             } else if (type == SELECT_TEXT) {

@@ -17,36 +17,30 @@ namespace core {
                 variables[var_name] = variables[var_value];
             } else {
                 variables[var_name] = 0;
-                raise(-1);
-                std::cerr<<"Warning: set a invalid var"<<std::endl;
-                // TODO: 错误处理
+                throw std::runtime_error("Set a invalid var");
             }
         }
     }
 
     void Environment::add(const std::string& var_name, const std::string& value, bool flagSub) {
-        int multi = 1;
+        int multiplier = 1;
         if (flagSub) {
-            multi = -1;
+            multiplier = -1;
         }
 
         if (variables.find(var_name) != variables.end()){
             // 如果加上的变量之前从未被赋值，系统会不执行加法。
             if (!isIdentifier(var_name)) {
-                variables[var_name] += multi * std::stoi(value);
+                variables[var_name] += multiplier * std::stoi(value);
             }else{
                 if (variables.find(value) != variables.end()){
-                    variables[var_name] += multi * variables[value];
+                    variables[var_name] += multiplier * variables[value];
                 } else {
-                    raise(-1);
-                    std::cerr<<"Add a invalid var"<<std::endl;
-                    // TODO: 错误处理
+                    throw std::runtime_error("Add a invalid var");
                 }
             }
         } else {
-            raise(-1);
-            std::cerr<<"Add a invalid var"<<std::endl;
-            // TODO: 错误处理
+            throw std::runtime_error("Add a invalid var");
         }
     }
 
@@ -55,6 +49,9 @@ namespace core {
     }
 
     void Environment::rand(const std::string &var_name, unsigned int min_value, unsigned int max_value) {
+        if (min_value > max_value) {
+            throw std::runtime_error("Invalid rand range");
+        }
         std::random_device rd;
         std::mt19937 gen(rd());
         std::uniform_int_distribution<unsigned int> dist(min_value, max_value);
@@ -71,13 +68,12 @@ namespace core {
     }
 
     CallStackItem Environment::popCallStack() {
+        if (call_stack.empty()) {
+            throw std::runtime_error("Pop a empty CallStack");
+        }
         CallStackItem res = call_stack.top();
         call_stack.pop();
         return res;
-    }
-
-    Environment::Environment(CallStackItem initial_call_stack_item) {
-        pushCallStack(std::move(initial_call_stack_item));
     }
 
 
@@ -87,6 +83,7 @@ namespace core {
         }
         return false;
     }
+
 
 
 } // core

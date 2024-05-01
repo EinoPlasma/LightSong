@@ -22,17 +22,19 @@ namespace core {
     private:
         std::string source;
         std::vector<std::string> lines;
-        unsigned int currLineNumber;
+        // unsigned int currLineNumber;
         std::unordered_map<std::string, unsigned int> labelMap;
     public:
         explicit Parser(std::string source);
         std::unique_ptr<Command> peek(unsigned int line_number);
-        std::unique_ptr<Command> next();
-        void setCurrLineNumber(unsigned int line_number);
-        void jumpToLabel(const std::string& targetLabel);
-        unsigned int getCurrLineNumber();
+        // std::unique_ptr<Command> next();
+        // void setCurrLineNumber(unsigned int line_number);
+        // void jumpToLabel(const std::string& targetLabel);
+        // unsigned int getCurrLineNumber();
         unsigned int getLineCount();
-        bool isEnd();
+        unsigned int findLabel(const std::string& targetLabel);
+        // bool isEnd();
+
         /*
         // bool jump(std::string& label);
          不要在这里定义一个jump函数。interpreter在读到jump指令的时候再一行一行地用peek，找到行号后用setLineNumber就可以啦。

@@ -24,7 +24,7 @@ namespace core {
     };
 
     struct CallStackItem {
-        std::string script_path;
+        std::string script_name; // 脚本文件名，**不加扩展名，不带前面的路径**， 例如“script_01”
         unsigned int line_number; // This line_number is the `currLineNumber` defined in Parser, not the number of lines in the script source file.
     };
 
@@ -33,7 +33,11 @@ namespace core {
         std::unordered_map<std::string, int> variables;
         std::stack<CallStackItem> call_stack;
     public:
-        explicit Environment(CallStackItem initial_call_stack_item);
+        std::string  curr_script_name;
+        unsigned int curr_script_line_number;
+
+        Environment() = default;
+
         void set(const std::string &var_name, const std::string &var_value);
         void rand(const std::string &var_name, unsigned int min_value, unsigned int max_value);
         void add(const std::string &var_name, const std::string &value, bool flagSub);

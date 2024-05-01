@@ -6,7 +6,7 @@
 #include "../utils.h"
 
 namespace core {
-    Parser::Parser(std::string source) : source(std::move(source)), currLineNumber(0){
+    Parser::Parser(std::string source) : source(std::move(source)){
         /*
          * @brief split source by line
          *
@@ -75,76 +75,80 @@ namespace core {
         return res;
     }
 
-
-
-    void Parser::setCurrLineNumber(unsigned int line_number) {
-        if(line_number > this->getLineCount()){
-            throw std::runtime_error("invalid line number");
-        }
-        this->currLineNumber = line_number;
-    }
-
-    std::unique_ptr<Command> Parser::next() {
-        if (currLineNumber >= lines.size()) {
-            raise(-1);
-            // reach to the end of file. the right response here is to panic, though program should exit when reach to EOF, but decide whenever to exit is the director's role.
-        }
-        this->currLineNumber++;
-        return peek(currLineNumber - 1);
-    }
-
-    bool Parser::isEnd() {
-        return currLineNumber >= lines.size();
-    }
-
-    unsigned int Parser::getCurrLineNumber() {
-        return currLineNumber;
-    }
-
     unsigned int Parser::getLineCount() {
         return lines.size();
     }
 
-    void Parser::jumpToLabel(const std::string& targetLabel) {
-        // 跳转到当前脚本里指定的行标签
-        // TODO: 换一个靠谱一点的实现（比如说在构造函数Parser()时就扫一遍整个脚本，建一个label_name到行号的哈希表
+    unsigned int Parser::findLabel(const std::string &targetLabel) {
         if (labelMap.find(targetLabel) != labelMap.end()) {
-            setCurrLineNumber(labelMap[targetLabel]);
-            return;
+            return labelMap[targetLabel];
         }
-        throw std::invalid_argument("goto a invalid label");
-//        std::cout << "Jump to label: "<<targetLabel<<currLineNumber<<std::endl;
-//        bool flagFoundLabel = false;
-//        for (unsigned int i = 0; i < lines.size(); i++) {
-//            if (lines[i].find("#label " + targetLabel) == 0) {
-//                setCurrLineNumber(i);
-//                flagFoundLabel = true;
-//                break;
-//            }
-//        }
-//        std::cout << "Jump to label: "<<targetLabel<<currLineNumber<<flagFoundLabel<<std::endl;
-//        if (!flagFoundLabel){
-//            throw std::invalid_argument("goto a invalid label");
-//            std::cerr << "goto a invalid label";
-//            // TODO: 错误处理
-//        }
-
-//        bool flagFoundLabel = false;
-//        for(int i=0; i < lines.size(); i++){
-//            if (peek(i)->type() == LABEL) {
-//                auto cmd_label = dynamic_cast<CommandLabel*>(peek(i).get());
-//                if (cmd_label->label_name == targetLabel) {
-//                    setCurrLineNumber(i);
-//                    flagFoundLabel = true;
-//                }
-//            }
-//        }
-//        if (!flagFoundLabel){
-//            throw std::invalid_argument("goto a invalid label");
-//            std::cerr << "goto a invalid label";
-//            // TODO: 错误处理
-//        }
+        throw std::runtime_error("Label not found");
     }
+
+
+
+//    void Parser::setCurrLineNumber(unsigned int line_number) {
+//        if(line_number > this->getLineCount()){
+//            throw std::runtime_error("invalid line number");
+//        }
+//        this->currLineNumber = line_number;
+//    }
+//
+//    std::unique_ptr<Command> Parser::next() {
+//        if (currLineNumber >= lines.size()) {
+//            raise(-1);
+//            // reach to the end of file. the right response here is to panic, though program should exit when reach to EOF, but decide whenever to exit is the director's role.
+//        }
+//        this->currLineNumber++;
+//        return peek(currLineNumber - 1);
+//    }
+//
+//    bool Parser::isEnd() {
+//        return currLineNumber >= lines.size();
+//    }
+//
+//    unsigned int Parser::getCurrLineNumber() {
+//        return currLineNumber;
+//    }
+//
+//
+//
+//    void Parser::jumpToLabel(const std::string& targetLabel) {
+//        // 跳转到当前脚本里指定的行标签
+//        if (labelMap.find(targetLabel) != labelMap.end()) {
+//            setCurrLineNumber(labelMap[targetLabel]);
+//            return;
+//        }
+//        throw std::invalid_argument("goto a invalid label");
+////        std::cout << "Jump to label: "<<targetLabel<<currLineNumber<<std::endl;
+////        bool flagFoundLabel = false;
+////        for (unsigned int i = 0; i < lines.size(); i++) {
+////            if (lines[i].find("#label " + targetLabel) == 0) {
+////                setCurrLineNumber(i);
+////                flagFoundLabel = true;
+////                break;
+////            }
+////        }
+////        std::cout << "Jump to label: "<<targetLabel<<currLineNumber<<flagFoundLabel<<std::endl;
+////        if (!flagFoundLabel){
+////            throw std::invalid_argument("goto a invalid label");
+////        }
+//
+////        bool flagFoundLabel = false;
+////        for(int i=0; i < lines.size(); i++){
+////            if (peek(i)->type() == LABEL) {
+////                auto cmd_label = dynamic_cast<CommandLabel*>(peek(i).get());
+////                if (cmd_label->label_name == targetLabel) {
+////                    setCurrLineNumber(i);
+////                    flagFoundLabel = true;
+////                }
+////            }
+////        }
+////        if (!flagFoundLabel){
+////            throw std::invalid_argument("goto a invalid label");
+////        }
+//    }
 
     std::unique_ptr<Parser> loadScript(const std::string &script_path) {
         std::string source = readUtf8File(script_path);
