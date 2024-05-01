@@ -3,7 +3,9 @@ project(LightSong)
 
 set(CMAKE_CXX_STANDARD 14)
 
-add_executable(LightSong main.cpp
+include(sdl2-config.cmake)
+
+add_executable(LightSong sdlInit.cpp
         core/Command.cpp
         core/Parser.cpp
         core/Command.h
@@ -19,4 +21,6 @@ add_executable(LightSong main.cpp
         platform/cli/Interface.cpp
         platform/cli/Interface.h
         platform/cli/CliCommand.cpp
-        platform/cli/CliCommand.h core/Environment.cpp core/Environment.h)
+        platform/cli/CliCommand.h core/Environment.cpp core/Environment.h platform/sdl/SdlCommand.cpp platform/sdl/SdlCommand.h platform/sdl/Interface.cpp platform/sdl/Interface.h sdlInit.cpp)
+
+target_link_libraries(LightSong PRIVATE SDL2::SDL2main SDL2::SDL2)

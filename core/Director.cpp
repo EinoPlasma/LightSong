@@ -211,13 +211,13 @@ namespace core {
                 for (unsigned int i = 0; i < choice_num; i++) {
                     auto choice_line = parser->peek(environment->curr_script_line_number++);
                     if (choice_line->type() != PLAIN_TEXT) {
-                        throw std::runtime_error("Expected BLANK line after #sel command");
+                        throw std::runtime_error("Expected PLAIN_TEXT line after #sel command");
                     }
                     std::string choice_text = dynamic_cast<CommandPlainText*>(choice_line.get())->command_literal;
                     choices.push_back(choice_text);
                 }
                 /*
-                 * 根据绘图指令队列模型，platform读取绘图指令时读到 #sel 指令就会停下，待获得用户选择的结果后会调用 Director::setFSEL() 把结果交给Director后，再继续向Director要绘图指令
+                 * 根据绘图指令队列模型，platform读取绘图指令时读到 #sel 指令就会停下，待获得用户选择的结果后会调用 Director::setFSEL() 把结果交给Director后，才继续向Director要绘图指令
                  */
                 return std::make_unique<cli::CliCommandSel>(choices);
             } else if (type == SELECT_TEXT) {
