@@ -7,6 +7,7 @@
 
 #include <string>
 #include <utility>
+#include <vector>
 
 namespace cli {
 
@@ -14,6 +15,7 @@ namespace cli {
         EXIT, // 结束整个程序
         ECHO,
         INPUT,
+        SEL,
     };
 
     class CliCommand {
@@ -38,6 +40,13 @@ namespace cli {
         CliCommandType type() override { return INPUT; }
         std::string prompt;
         explicit CliCommandInput(std::string prompt): prompt(std::move(prompt)) { };
+    };
+
+    class CliCommandSel : public CliCommand {
+    public:
+        CliCommandType type() override { return SEL; }
+        std::vector<std::string> options;
+        explicit CliCommandSel(std::vector<std::string>& options) : options(std::move(options)){ };
     };
 
 } // cli

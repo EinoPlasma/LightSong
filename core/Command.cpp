@@ -9,8 +9,8 @@ namespace core {
     // Factory function to create a Command object based on the provided Command type and parameters
     std::unique_ptr<Command> createCommand(CommandType type, const std::vector<std::string>& params) {
         switch (type) {
-            case BLANK:
-                return std::make_unique<CommandBlank>(params);
+            case PLAIN_TEXT:
+                return std::make_unique<CommandPlainText>(params);
             case UNKNOWN:
                 return std::make_unique<CommandUnknown>();
             case BROKEN:

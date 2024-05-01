@@ -44,7 +44,7 @@ namespace core {
         std::string& line = lines[line_number];
         if (line.empty() || line[0] != '#') {
             // return BLANK if the line is empty or not a command
-            return createCommand(BLANK, std::vector<std::string>({line}));
+            return createCommand(PLAIN_TEXT, std::vector<std::string>({line}));
         }
 
         std::stringstream ss(line);

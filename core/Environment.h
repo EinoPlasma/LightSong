@@ -11,17 +11,21 @@
 
 namespace core {
 
-    enum VariableKeyword {
-        FSEL,  // 存储#sel 和#select_text 的选择结果
-        FMNOTH,// 游戏中的月份，可以使用#date 显示在屏幕上，也会显示在存档中。
-        FDATE, // 游戏中的日期，可以使用#date 显示在屏幕上，也会显示在存档中。
-    };
+//    enum VariableKeyword {
+//        FSEL,  // 存储#sel 和#select_text 的选择结果
+//        FMNOTH,// 游戏中的月份，可以使用#date 显示在屏幕上，也会显示在存档中。
+//        FDATE, // 游戏中的日期，可以使用#date 显示在屏幕上，也会显示在存档中。
+//    };
+//
+//    const std::unordered_map<std::string, VariableKeyword> variable_keywords = {
+//            {"FSEL", FSEL},
+//            {"FMONTH", FMNOTH},
+//            {"FDATE", FDATE},
+//    };
 
-    const std::unordered_map<std::string, VariableKeyword> variable_keywords = {
-            {"FSEL", FSEL},
-            {"FMONTH", FMNOTH},
-            {"FDATE", FDATE},
-    };
+    std::string const RESERVED_VAR_FSEL = "FSEL";
+    std::string const RESERVED_VAR_FMNOTH = "FMNOTH";
+    std::string const RESERVED_VAR_FDATE = "FDATE";
 
     struct CallStackItem {
         std::string script_name; // 脚本文件名，**不加扩展名，不带前面的路径**， 例如“script_01”
@@ -30,6 +34,7 @@ namespace core {
 
     class Environment {
     private:
+        // TODO: add global variables support
         std::unordered_map<std::string, int> variables;
         std::stack<CallStackItem> call_stack;
     public:

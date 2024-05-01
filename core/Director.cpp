@@ -26,7 +26,7 @@ namespace core {
             std::unique_ptr<Command> cmd = parser->peek(environment->curr_script_line_number++);
             CommandType type = cmd->type();
 
-            if (type == BLANK) {
+            if (type == PLAIN_TEXT) {
                 // BLANK case
             } else if (type == UNKNOWN) {
                 // UNKNOWN case
@@ -191,17 +191,35 @@ namespace core {
                 parser = std::move(loadScript(root_path + PATH_DIR_SCRIPT + environment->curr_script_name + CONFIG_SCRITP_SUFFIX));
             } else if (type == SEL) {
                 // SEL case
+//                #sel 2
+//                我是选项一
+//                我是选项二
+//                #if FSEL=0, goto TEST_SELECTION_01
+//                #if FSEL=1, goto TEST_SELECTION_02
+//                #label TEST_SELECTION_01
+//                #say 你选了选项一
+//                #goto TEST_SELECTION_END
+//                #label TEST_SELECTION_02
+//                #say 你选了选项二
+//                #goto TEST_SELECTION_END
+//                #label TEST_SELECTION_END
+//                #say 选择支结束，重回共通部分
+
                 auto targetCmd = dynamic_cast<CommandSel*>(cmd.get());
                 unsigned int choice_num = targetCmd->choiceNum;
                 std::vector<std::string> choices;
                 for (unsigned int i = 0; i < choice_num; i++) {
                     auto choice_line = parser->peek(environment->curr_script_line_number++);
-                    if (choice_line->type() != BLANK) {
+                    if (choice_line->type() != PLAIN_TEXT) {
                         throw std::runtime_error("Expected BLANK line after #sel command");
                     }
-                    std::string choice_text = dynamic_cast<CommandBlank*>(choice_line.get())->command_literal;
+                    std::string choice_text = dynamic_cast<CommandPlainText*>(choice_line.get())->command_literal;
                     choices.push_back(choice_text);
                 }
+                /*
+                 * 根据绘图指令队列模型，platform读取绘图指令时读到 #sel 指令就会停下，待获得用户选择的结果后会调用 Director::setFSEL() 把结果交给Director后，再继续向Director要绘图指令
+                 */
+                return std::make_unique<cli::CliCommandSel>(choices);
             } else if (type == SELECT_TEXT) {
                 // SELECT_TEXT case
             } else if (type == SELECT_VAR) {
@@ -245,6 +263,10 @@ namespace core {
 
         // std::cout<<cmd->type()<<std::endl;
         return std::make_unique<cli::CliCommandExit>();
+    }
+
+    void Director::setFSEL(unsigned int choice) {
+        environment->set(RESERVED_VAR_FSEL, std::to_string(choice));
     }
 
 

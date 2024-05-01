@@ -17,8 +17,7 @@ namespace core {
 
     enum CommandType {
         // ENDOFFILE, /* 读到文件末尾直接返回一个ENDOFFILE给上级处理，或者是让上级自己检查有没有EOF，哪一种更好呢？
-        // It was deleted and now added back, because the #sel command is multi-line, so we can't delete all lines that don't start with # during preprocessing, so we need to mark these lines with BLANK
-        BLANK, /* Deprecated, since all the lines not begins with '#' will be discord when Parser()*/
+        PLAIN_TEXT, // It was deleted and now added back, because the #sel command is multi-line, so we can't delete all lines that don't start with # during preprocessing, so we need to mark these lines with PLAIN_TEXT
         BROKEN, // command name is valid but params are invalid
         UNKNOWN,
         // 1. dialogue / text
@@ -140,13 +139,13 @@ namespace core {
         virtual CommandType type() = 0;
     };
 
-    class CommandBlank : public Command {
+    class CommandPlainText : public Command {
     public:
         std::string command_literal;
 
-        CommandType type() override { return BLANK; }
+        CommandType type() override { return PLAIN_TEXT; }
 
-        explicit CommandBlank(const std::vector<std::string>& params) {
+        explicit CommandPlainText(const std::vector<std::string>& params) {
             // It takes only one parameter for record the command_literal
             if (params.size() != 1) {
                 throw std::invalid_argument("Invalid parameter size. Expected 1 parameter.");
