@@ -39,6 +39,18 @@ if(WIN32 AND NOT MSVC)
   set_target_properties(SDL2::SDL2main PROPERTIES
     INTERFACE_LINK_LIBRARIES "-L${SDL2_LIBDIR} -lmingw32 -lSDL2main -mwindows")
 
+  add_library(SDL2::SDL2_image INTERFACE IMPORTED)
+  set_target_properties(SDL2::SDL2_image PROPERTIES
+          INTERFACE_LINK_LIBRARIES "-L${SDL2_LIBDIR} -lmingw32 -lSDL2_image -mwindows")
+
+  add_library(SDL2::SDL2_ttf INTERFACE IMPORTED)
+  set_target_properties(SDL2::SDL2_ttf PROPERTIES
+          INTERFACE_LINK_LIBRARIES "-L${SDL2_LIBDIR} -lmingw32 -lSDL2_ttf -mwindows")
+
+  add_library(SDL2::SDL2_mixer INTERFACE IMPORTED)
+  set_target_properties(SDL2::SDL2_mixer PROPERTIES
+          INTERFACE_LINK_LIBRARIES "-L${SDL2_LIBDIR} -lmingw32 -lSDL2_mixer -mwindows")
+
 else() # (not WIN32) or MSVC
 
   add_library(SDL2::SDL2 SHARED IMPORTED)

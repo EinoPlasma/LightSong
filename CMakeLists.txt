@@ -4,6 +4,7 @@ project(LightSong)
 set(CMAKE_CXX_STANDARD 14)
 
 include(sdl2-config.cmake)
+#include(sdl2_image-config.cmake)
 
 add_executable(LightSong sdlInit.cpp
         core/Command.cpp
@@ -23,4 +24,4 @@ add_executable(LightSong sdlInit.cpp
         platform/cli/CliCommand.cpp
         platform/cli/CliCommand.h core/Environment.cpp core/Environment.h platform/sdl/SdlCommand.cpp platform/sdl/SdlCommand.h platform/sdl/Interface.cpp platform/sdl/Interface.h sdlInit.cpp)
 
-target_link_libraries(LightSong PRIVATE SDL2::SDL2main SDL2::SDL2)
+target_link_libraries(LightSong PRIVATE SDL2::SDL2main SDL2::SDL2 SDL2::SDL2_image SDL2::SDL2_ttf SDL2::SDL2_mixer)
