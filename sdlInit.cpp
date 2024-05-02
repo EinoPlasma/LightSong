@@ -319,6 +319,7 @@
 //    }
 
 #include "core/Director.h"
+#include "core/EnginePath.h"
 
 #include <iostream>
 #include <SDL2/SDL.h>
@@ -326,26 +327,30 @@
 #include <SDL2/SDL_ttf.h>
 #include <SDL2/SDL_mixer.h>
 
-// 资源文件路径
-const std::string RESOURCE_PATH = "";
 
-// 立绘和背景的文件名
-const std::string BACKGROUND_FILE = "background1.png";
-const std::string CHARACTER_FILE = "character1.png";
 
-// 字体文件和文字的内容
-const std::string FONT_FILE = "font.ttf";
-const std::string TEXT_CONTENT = "Hello, World!";
+//// 资源文件路径
+//const std::string RESOURCE_PATH = "";
+//
+//// 立绘和背景的文件名
+//const std::string BACKGROUND_FILE = "background1.png";
+//const std::string CHARACTER_FILE = "character1.png";
+//
+//// 字体文件和文字的内容
+//const std::string FONT_FILE = "font.ttf";
+//const std::string TEXT_CONTENT = "Hello, World!";
+//
+//// 音效和音乐文件名
+//const std::string SOUND_EFFECT_FILE = "se04.mp3";
+//const std::string BACKGROUND_MUSIC_FILE = "bgm01.mp3";
+//
+//// 文字层的位置和尺寸
+//const int TEXT_LAYER_X = 50;
+//const int TEXT_LAYER_Y = 50;
+//const int TEXT_LAYER_WIDTH = 700;
+//const int TEXT_LAYER_HEIGHT = 100;
 
-// 音效和音乐文件名
-const std::string SOUND_EFFECT_FILE = "se04.mp3";
-const std::string BACKGROUND_MUSIC_FILE = "bgm01.mp3";
-
-// 文字层的位置和尺寸
-const int TEXT_LAYER_X = 50;
-const int TEXT_LAYER_Y = 50;
-const int TEXT_LAYER_WIDTH = 700;
-const int TEXT_LAYER_HEIGHT = 100;
+using namespace sdl;
 
 // AVG游戏类
 class Interface {
@@ -368,6 +373,8 @@ private:
     SDL_Renderer* renderer_ = nullptr;
     SDL_Texture* backgroundTexture_ = nullptr;
 
+    std::string font_path;
+    unsigned int font_size;
     TTF_Font* font_ = nullptr;
     SDL_Texture* textTexture_ = nullptr;
 
@@ -437,39 +444,40 @@ bool Interface::initialize()
 
 void Interface::loadMedia()
 {
-    // 加载背景纹理
-    SDL_Surface* backgroundSurface = IMG_Load((RESOURCE_PATH + BACKGROUND_FILE).c_str());
+    // 加载启动时默认背景纹理
+    SDL_Surface* backgroundSurface = IMG_Load((core::PATH_DIR_BG + core::PATH_FILE_BG_LOGO1 + director_->getConfig().bgformat).c_str());
     backgroundTexture_ = SDL_CreateTextureFromSurface(renderer_, backgroundSurface);
     SDL_FreeSurface(backgroundSurface);
-
-    // 加载立绘纹理
-    SDL_Surface* characterSurface = IMG_Load((RESOURCE_PATH + CHARACTER_FILE).c_str());
-    characterTexture_ = SDL_CreateTextureFromSurface(renderer_, characterSurface);
-    SDL_FreeSurface(characterSurface);
-
+//
+//    // 加载立绘纹理
+//    SDL_Surface* characterSurface = IMG_Load((RESOURCE_PATH + CHARACTER_FILE).c_str());
+//    characterTexture_ = SDL_CreateTextureFromSurface(renderer_, characterSurface);
+//    SDL_FreeSurface(characterSurface);
+//
     // 加载字体
-    font_ = TTF_OpenFont((RESOURCE_PATH + FONT_FILE).c_str(), 28);
+    // TODO: 增加存档系统，然后从存档中查询有没有自定义的fontsize，有的话就用自定义的。
+    font_ = TTF_OpenFont("default.ttf", director_->getConfig().fontsize);
     if (font_ == nullptr) {
         std::cout << "Failed to load font! SDL_ttf Error: " << TTF_GetError() << std::endl;
     }
-
-    // 创建文字纹理
-    SDL_Color textColor = { 255, 255, 255 };
-    SDL_Surface* textSurface = TTF_RenderText_Solid(font_, TEXT_CONTENT.c_str(), textColor);
-    textTexture_ = SDL_CreateTextureFromSurface(renderer_, textSurface);
-    SDL_FreeSurface(textSurface);
-
-    // 加载背景音乐
-    backgroundMusic_ = Mix_LoadMUS((RESOURCE_PATH + BACKGROUND_MUSIC_FILE).c_str());
-    if (backgroundMusic_ == nullptr) {
-        std::cout << "Failed to load background music! SDL_mixer Error: " << Mix_GetError() << std::endl;
-    }
-
-    // 加载音效
-    soundEffect_ = Mix_LoadWAV((RESOURCE_PATH + SOUND_EFFECT_FILE).c_str());
-    if (soundEffect_ == nullptr) {
-        std::cout << "Failed to load sound effect! SDL_mixer Error: " << Mix_GetError() << std::endl;
-    }
+//
+//    // 创建文字纹理
+//    SDL_Color textColor = { 255, 255, 255 };
+//    SDL_Surface* textSurface = TTF_RenderText_Solid(font_, TEXT_CONTENT.c_str(), textColor);
+//    textTexture_ = SDL_CreateTextureFromSurface(renderer_, textSurface);
+//    SDL_FreeSurface(textSurface);
+//
+//    // 加载背景音乐
+//    backgroundMusic_ = Mix_LoadMUS((RESOURCE_PATH + BACKGROUND_MUSIC_FILE).c_str());
+//    if (backgroundMusic_ == nullptr) {
+//        std::cout << "Failed to load background music! SDL_mixer Error: " << Mix_GetError() << std::endl;
+//    }
+//
+//    // 加载音效
+//    soundEffect_ = Mix_LoadWAV((RESOURCE_PATH + SOUND_EFFECT_FILE).c_str());
+//    if (soundEffect_ == nullptr) {
+//        std::cout << "Failed to load sound effect! SDL_mixer Error: " << Mix_GetError() << std::endl;
+//    }
 }
 
 void Interface::close()
@@ -509,17 +517,111 @@ void Interface::update()
     // 切换背景、立绘、文字等逻辑处理
     // ...
 
-    SDL_Surface* backgroundSurface = IMG_Load((RESOURCE_PATH + "background2.png").c_str());
-    backgroundTexture_ = SDL_CreateTextureFromSurface(renderer_, backgroundSurface);
-    SDL_FreeSurface(backgroundSurface);
+//    SDL_Surface* backgroundSurface = IMG_Load((RESOURCE_PATH + "background2.png").c_str());
+//    backgroundTexture_ = SDL_CreateTextureFromSurface(renderer_, backgroundSurface);
+//    SDL_FreeSurface(backgroundSurface);
+//
+//    backgroundRect_.x += 10;
+//
+//    SDL_SetTextureAlphaMod(characterTexture_, 100);
+//
+//    // 播放音效
+//    if (soundEffect_ != nullptr) {
+//        Mix_PlayChannel(-1, soundEffect_, 0);
+//    }
 
-    backgroundRect_.x += 10;
 
-    SDL_SetTextureAlphaMod(characterTexture_, 100);
 
-    // 播放音效
-    if (soundEffect_ != nullptr) {
-        Mix_PlayChannel(-1, soundEffect_, 0);
+    std::unique_ptr<sdl::SdlCommand> cmd = director_->nextSdlCommand();
+    sdl::SdlCommandType type = cmd->type();
+    if (type == SDL_SAY) {
+    } else if (type == SDL_TEXT) {
+    } else if (type == SDL_TEXT_OFF) {
+        // TEXT_OFF case
+    } else if (type == SDL_WAITKEY) {
+        // WAITKEY case
+    } else if (type == SDL_TITLE) {
+    } else if (type == SDL_TITLE_DSP) {
+        // TITLE_DSP case
+    } else if (type == SDL_CHARA) {
+        // CHARA case
+    } else if (type == SDL_CHARA_CLS) {
+        // CHARA_CLS case
+    } else if (type == SDL_CHARA_POS) {
+        // CHARA_POS case
+    } else if (type == SDL_BG) {
+        // BG case
+        auto targetCmd = dynamic_cast<SdlCommandBg*>(cmd.get());
+        SDL_Log("bg cmd: %s", targetCmd->filename.c_str());
+        backgroundTexture_ = IMG_LoadTexture(renderer_, (core::PATH_DIR_BG + targetCmd->filename + director_->getConfig().bgformat).c_str());
+    } else if (type == SDL_FLASH) {
+        // FLASH case
+    } else if (type == SDL_QUAKE) {
+        // QUAKE case
+    } else if (type == SDL_FADE_OUT) {
+        // FADE_OUT case
+    } else if (type == SDL_FADE_IN) {
+        // FADE_IN case
+    } else if (type == SDL_MOVIE) {
+        // MOVIE case
+    } else if (type == SDL_TEXTBOX) {
+        // TEXTBOX case
+    } else if (type == SDL_CHARA_QUAKE) {
+        // CHARA_QUAKE case
+    } else if (type == SDL_CHARA_DOWN) {
+        // CHARA_DOWN case
+    } else if (type == SDL_CHARA_UP) {
+        // CHARA_UP case
+    } else if (type == SDL_SCROLL) {
+        // SCROLL case
+    } else if (type == SDL_CHARA_Y) {
+        // CHARA_Y case
+    } else if (type == SDL_CHARA_SCROLL) {
+        // CHARA_SCROLL case
+    } else if (type == SDL_ANIME_ON) {
+        // ANIME_ON case
+    } else if (type == SDL_ANIME_OFF) {
+        // ANIME_OFF case
+    } else if (type == SDL_CHARA_ANIME) {
+        // CHARA_ANIME case
+    } else if (type == SDL_SEL) {
+        auto targetCmd = dynamic_cast<SdlCommandSel*>(cmd.get());
+    } else if (type == SDL_SELECT_TEXT) {
+        // SELECT_TEXT case
+    } else if (type == SDL_SELECT_VAR) {
+        // SELECT_VAR case
+    } else if (type == SDL_SELECT_IMG) {
+        // SELECT_IMG case
+    } else if (type == SDL_SELECT_IMGS) {
+        // SELECT_IMGS case
+    } else if (type == SDL_WAIT) {
+        // WAIT case
+    } else if (type == SDL_WAIT_SE) {
+        // WAIT_SE case
+    } else if (type == SDL_BGM) {
+        // BGM case
+    } else if (type == SDL_BGM_STOP) {
+        // BGM_STOP case
+    } else if (type == SDL_SE) {
+        // SE case
+    } else if (type == SDL_SE_STOP) {
+        // SE_STOP case
+    } else if (type == SDL_VO) {
+        // VO case
+    } else if (type == SDL_LOAD) {
+        // LOAD case
+    } else if (type == SDL_ALBUM) {
+        // ALBUM case
+    } else if (type == SDL_MUSIC) {
+        // MUSIC case
+    } else if (type == SDL_DATE) {
+        // DATE case
+    } else if (type == SDL_CONFIG) {
+        // CONFIG case
+    } else {
+        // Default case
+        throw std::runtime_error("Unknown command type: " + std::to_string(type));
+        // std::cerr << "Unknown command type: " << type << std::endl;
     }
 }
 
@@ -532,7 +634,7 @@ void Interface::render()
     SDL_RenderCopy(renderer_, backgroundTexture_, nullptr, &backgroundRect_);
 
     // 渲染立绘
-    SDL_RenderCopy(renderer_, characterTexture_, nullptr, &characterRect_);
+    // SDL_RenderCopy(renderer_, characterTexture_, nullptr, &characterRect_);
 
     // 渲染文字层
     SDL_RenderCopy(renderer_, textTexture_, nullptr, &textRect_);
@@ -553,16 +655,16 @@ void Interface::run()
 
     backgroundRect_.x = 0;
     backgroundRect_.y = 0;
-    backgroundRect_.w = WINDOW_WIDTH;
-    backgroundRect_.h = WINDOW_HEIGHT;
+    backgroundRect_.w = director_->getConfig().imagesize_width;
+    backgroundRect_.h = director_->getConfig().imagesize_height;
 
 
-    textRect_.x = TEXT_LAYER_X;
-    textRect_.y = TEXT_LAYER_Y;
-    textRect_.w = TEXT_LAYER_WIDTH;
-    textRect_.h = TEXT_LAYER_HEIGHT;
+    textRect_.x = 10;
+    textRect_.y = 10;
+    textRect_.w = 400;
+    textRect_.h = 200;
 
-    currentText_ = TEXT_CONTENT;
+    currentText_ = "测试文字 Test";
 
     if (backgroundMusic_ != nullptr) {
         Mix_PlayMusic(backgroundMusic_, -1);
@@ -586,9 +688,6 @@ int main(int argc, char* argv[])
 
     return 0;
 }
-
-
-
 
 
 //

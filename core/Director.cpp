@@ -336,6 +336,8 @@ namespace core {
                 return createSdlCommand(cmd);
             }
 
+
+
             // 注意不是所有的分支都会被执行，在DIRECT_FORWARD_COMMANDS中的case是直接由createSdlCommand()处理的，下面对应的分支就不会执行了
             if (type == PLAIN_TEXT) {
                 // BLANK case
@@ -565,6 +567,7 @@ namespace core {
         // std::cout<<cmd->type()<<std::endl;
         return std::make_unique<sdl::SdlCommandExit>();
     }
+
 
     std::unique_ptr<sdl::SdlCommand> createSdlCommand(std::unique_ptr<core::Command>& command) {
         switch (command->type()) {
