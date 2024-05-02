@@ -6,7 +6,8 @@
     - 用于存放游戏状态。**所有**和存档有关的代码都要放到这
   - Parser
     - 用于解析脚本，**Parser应该被设计成无状态的**（因为游戏的状态都应该由Environment管理）
-
+  - GameConfig
+    - GameConfig归Environment管，Environment会先读取gameconfig.txt里面的值并parse存在成员里，再读取save/config.sav里面的值，如果能读到就用新读到的值覆写原来的成员变量的值。
 - platform
   - 绘图指令队列模型：platform主动、单向地调用Director的nextCommand()方法获得下一步的绘图指令，然后自行决定这些绘图指令执行的时机
     - 比如说platform可以一口气把选择支指令之前的绘图指令都存在队列里，等跑到选择支用户做出了一个特定选择之后再向Director继续要绘图指令。

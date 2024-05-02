@@ -4,22 +4,24 @@
 
 #include "GameConfig.h"
 #include "iostream"
+#include "../utils.h"
 namespace core {
     std::unique_ptr<GameConfig> loadGameConfig(const std::string& file_path) {
-        std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
-        std::wifstream file(file_path, std::ios::in);
-
-        if (file.is_open()) {
-            std::wstringstream buffer;
-            buffer << file.rdbuf();
-            std::wstring source = buffer.str();
-            file.close();
-
-            std::string narrow_source = converter.to_bytes(source);
-            return std::make_unique<GameConfig>(narrow_source);
-        }
-
-        return nullptr;
+//        std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
+//        std::wifstream file(file_path, std::ios::in);
+//
+//        if (file.is_open()) {
+//            std::wstringstream buffer;
+//            buffer << file.rdbuf();
+//            std::wstring source = buffer.str();
+//            file.close();
+//
+//            std::string narrow_source = converter.to_bytes(source);
+//            return std::make_unique<GameConfig>(narrow_source);
+//        }
+        std::string source = readUtf8File(file_path);
+        return std::make_unique<GameConfig>(source);
+        throw std::runtime_error("Failed to open GameConfig file: " + file_path);
     }
 
     void printGameConfig(const GameConfig& config) {

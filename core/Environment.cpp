@@ -84,6 +84,13 @@ namespace core {
         return false;
     }
 
+    const GameConfig &Environment::getConfig() const {
+        return *config;
+    }
+
+    Environment::Environment(const std::string &config_path) {
+        config = loadGameConfig(config_path);
+    }
 
 
 } // core

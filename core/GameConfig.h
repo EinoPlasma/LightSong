@@ -19,8 +19,9 @@ namespace core {
     std::unique_ptr<GameConfig> loadGameConfig(const std::string& file_path);
 
     class GameConfig {
-    public:
+    private:
         std::string source;
+    public:
         std::string gametitle;
         std::string platform;
         float engineversion;
@@ -56,6 +57,7 @@ namespace core {
         bool anime;
 
         GameConfig(std::string& source): source(source) {
+            setDefaultValue();
             parseConfig();
         }
 
@@ -64,6 +66,35 @@ namespace core {
         friend void printGameConfig(const GameConfig& config);
 
     private:
+        void setDefaultValue() {
+            gametitle = "Undefined";
+            platform = "pygame";
+            engineversion = 1.2f;
+            scripttype = "pymo";
+            font = -1;
+            fontsize = 26;
+            fontaa = true;
+            hint = true;
+            prefetching = true;
+            grayselected = true;
+            playvideo = true;
+            textspeed = 4;
+            bgmvolume = 1;
+            vovolume = 2;
+            imagesize_width = 540;
+            imagesize_height = 360;
+            startscript = "start";
+            nameboxorig_x = 0;
+            nameboxorig_y = 7;
+            textcolor = "#ffffff";
+            msgtb_top = 6;
+            msgtb_bottom = 0;
+            msglr_left = 10;
+            msglr_right = 3;
+            namealign = "middle";
+            anime = true;
+        }
+
         void parseConfig() {
             size_t pos = 0;
             std::string delimiter = "\n";

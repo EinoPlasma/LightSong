@@ -10,21 +10,29 @@
 #include "Parser.h"
 #include "Environment.h"
 #include "../platform/cli/CliCommand.h"
+#include "../platform/sdl/SdlCommand.h"
 
 namespace core {
 
     class Director {
     private:
         std::string root_path;
-        std::unique_ptr<core::GameConfig> config = nullptr;
+
         std::unique_ptr<core::Parser> parser = nullptr;
         std::unique_ptr<core::Environment> environment = nullptr;
     public:
         explicit Director(std::basic_string<char> root_path);
         void next();
-        std::unique_ptr<cli::CliCommand> nextCliCommand();
         void setFSEL(unsigned int choice);
+        const GameConfig& getConfig() const;
+
+        std::unique_ptr<cli::CliCommand> nextCliCommand();
+
+        std::unique_ptr<sdl::SdlCommand> nextSdlCommand();
+
     };
+
+    std::unique_ptr<sdl::SdlCommand> createSdlCommand(std::unique_ptr<core::Command>& command);
 
 } // core
 

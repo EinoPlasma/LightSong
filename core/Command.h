@@ -801,7 +801,6 @@ namespace core {
     public:
         unsigned int choiceNum;
         std::string hintPic;
-        std::vector<std::string> choiceTexts;
 
         CommandType type() override { return SEL; }
 
@@ -809,7 +808,6 @@ namespace core {
             if (params.size() != 1 && params.size() != 2) {
                 throw std::invalid_argument("Invalid parameter size. Expected 1 or 2 parameters.");
             }
-            // TODO: CommandSel的跨行处理
             choiceNum = std::stoi(params[0]);
             if (params.size() > 1){
                 hintPic = params[1];

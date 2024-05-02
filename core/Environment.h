@@ -8,6 +8,7 @@
 #include "unordered_map"
 #include "string"
 #include "stack"
+#include "GameConfig.h"
 
 namespace core {
 
@@ -37,11 +38,12 @@ namespace core {
         // TODO: add global variables support
         std::unordered_map<std::string, int> variables;
         std::stack<CallStackItem> call_stack;
+        std::unique_ptr<core::GameConfig> config = nullptr;
     public:
         std::string  curr_script_name;
         unsigned int curr_script_line_number;
 
-        Environment() = default;
+        explicit Environment(const std::string &config_path);
 
         void set(const std::string &var_name, const std::string &var_value);
         void rand(const std::string &var_name, unsigned int min_value, unsigned int max_value);
@@ -52,6 +54,8 @@ namespace core {
         bool varExists(const std::string &var_name);
         void pushCallStack(CallStackItem item);
         CallStackItem popCallStack();
+
+        const GameConfig& getConfig() const;
     };
 
 } // core
