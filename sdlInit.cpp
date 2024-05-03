@@ -327,6 +327,10 @@
 #include <SDL2/SDL_ttf.h>
 #include <SDL2/SDL_mixer.h>
 
+// TODO: se支持多通道
+const unsigned int CHANNEL_SE = 0;
+const unsigned int CHANNEL_VOICE = 1;
+
 // AVG游戏类
 class Interface {
 public:
@@ -349,8 +353,6 @@ private:
     SDL_Renderer* renderer_ = nullptr;
     SDL_Texture* backgroundTexture_ = nullptr;
 
-    std::string font_path;
-    unsigned int font_size;
     TTF_Font* font_ = nullptr;
     std::string currentText_;
     SDL_Texture* textTexture_ = nullptr;
@@ -420,6 +422,11 @@ bool Interface::initialize()
         return false;
     }
 
+    // 注册一个全局回调函数，当音效播放完毕时自动释放。仅适用于通过Mix_PlayChannel函数播放的音效
+    Mix_ChannelFinished([](int channel) {
+        Mix_FreeChunk(Mix_GetChunk(channel));
+    });
+
     return true;
 }
 
@@ -452,6 +459,7 @@ void Interface::loadMedia()
 //    if (backgroundMusic_ == nullptr) {
 //        std::cout << "Failed to load background music! SDL_mixer Error: " << Mix_GetError() << std::endl;
 //    }
+
 //    // 加载音效
 //    soundEffect_ = Mix_LoadWAV((RESOURCE_PATH + SOUND_EFFECT_FILE).c_str());
 //    if (soundEffect_ == nullptr) {
@@ -577,14 +585,67 @@ void Interface::update()
         // WAIT_SE case
     } else if (type == sdl::SDL_BGM) {
         // BGM case
+        auto targetCmd = dynamic_cast<sdl::SdlCommandBgm*>(cmd.get());
+        std::string filename = root_path_ + core::PATH_DIR_BGM + targetCmd->filename + director_->getConfig().bgmformat;
+        // 每次更换BGM前记得把之前的BGM给free掉
+        Mix_FreeMusic(backgroundMusic_);
+        backgroundMusic_ = Mix_LoadMUS(filename.c_str());
+        if (backgroundMusic_ == nullptr) {
+            SDL_Log("SDL_Music: %s", Mix_GetError());
+            throw std::runtime_error("SDL_Music: " + std::string(Mix_GetError()));
+        }
+        if (targetCmd->isLoop) {
+            SDL_Log("bgm cmd: %s, Loop=true", filename.c_str());
+            Mix_PlayMusic(backgroundMusic_, -1);
+        } else {
+            SDL_Log("bgm cmd: %s, Loop=false", filename.c_str());
+            Mix_PlayMusic(backgroundMusic_, 0);
+        }
     } else if (type == sdl::SDL_BGM_STOP) {
         // BGM_STOP case
+        if (Mix_PlayingMusic() != 0) {
+            // Returns non-zero if music is playing, zero otherwise.
+            const int SDL_BGM_STOP_FADE_OUT_TIME = 500;
+            Mix_FadeOutMusic(SDL_BGM_STOP_FADE_OUT_TIME);
+        }
     } else if (type == sdl::SDL_SE) {
         // SE case
+        auto targetCmd = dynamic_cast<sdl::SdlCommandSe*>(cmd.get());
+        targetCmd->filename = root_path_ + core::PATH_DIR_SE + targetCmd->filename + director_->getConfig().seformat;
+        // load se support .mp3 .ogg .wav formats
+        Mix_Chunk* se = Mix_LoadWAV(targetCmd->filename.c_str());
+        // play
+        if(se == nullptr) {
+            throw std::runtime_error("SDL_SE: " + std::string(Mix_GetError()));
+        }
+        if (targetCmd->isLoop) {
+            SDL_Log("se cmd: %s, Loop=true", targetCmd->filename.c_str());
+            Mix_PlayChannel(CHANNEL_SE, se, -1);
+        } else {
+            SDL_Log("se cmd: %s, Loop=false", targetCmd->filename.c_str());
+            Mix_PlayChannel(CHANNEL_SE, se, 0);
+        }
     } else if (type == sdl::SDL_SE_STOP) {
         // SE_STOP case
+        const int SDL_SE_STOP_FADE_OUT_TIME = 100;
+        Mix_FadeOutChannel(CHANNEL_SE, SDL_SE_STOP_FADE_OUT_TIME);
     } else if (type == sdl::SDL_VO) {
         // VO case
+        auto targetCmd = dynamic_cast<sdl::SdlCommandVo*>(cmd.get());
+        targetCmd->filename = root_path_ + core::PATH_DIR_VOICE + targetCmd->filename + director_->getConfig().voiceformat;
+        // load se support .mp3 .ogg .wav formats
+        Mix_Chunk* vo = Mix_LoadWAV(targetCmd->filename.c_str());
+        // play
+        if(vo == nullptr) {
+            throw std::runtime_error("SDL_VO: " + std::string(Mix_GetError()));
+        }
+        SDL_Log("vo cmd: %s", targetCmd->filename.c_str());
+        // halt if CHANNEL_VOICE is playing
+        if (Mix_Playing(CHANNEL_VOICE)) {
+            Mix_HaltChannel(CHANNEL_VOICE);
+        }
+        //TODO: bug, 一段vo没播放完就播下一个vo会崩溃。se可能也有这个bug
+        Mix_PlayChannel(CHANNEL_VOICE, vo, 0);
     } else if (type == sdl::SDL_LOAD) {
         // LOAD case
     } else if (type == sdl::SDL_ALBUM) {
@@ -603,6 +664,10 @@ void Interface::update()
 
 
 
+
+
+
+
 }
 
 void Interface::render()
@@ -613,7 +678,6 @@ void Interface::render()
     // 渲染背景
     SDL_RenderCopy(renderer_, backgroundTexture_, nullptr, &backgroundRect_);
 
-
 //    // 渲染立绘
 //    SDL_Rect characterRect_;
 //    characterRect_.x = 100;
@@ -622,7 +686,6 @@ void Interface::render()
 //    characterRect_.h = 300;
 //
 //    SDL_RenderCopy(renderer_, characterTexture_, nullptr, &characterRect_);
-
 
     // 渲染文字层
     SDL_RenderCopy(renderer_, textTexture_, nullptr, &textRect_);
@@ -647,14 +710,12 @@ void Interface::run()
     backgroundRect_.h = director_->getConfig().imagesize_height;
 
 
-
     textRect_.x = 20;
     textRect_.y = 20;
     textRect_.w = 400;
     textRect_.h = 100;
 
     currentText_ = "TEXT_CONTENT currentText_测试文字";
-
 
     if (backgroundMusic_ != nullptr) {
         Mix_PlayMusic(backgroundMusic_, -1);
@@ -680,6 +741,9 @@ int main(int argc, char* argv[])
 
     return 0;
 }
+
+
+
 
 
 //
