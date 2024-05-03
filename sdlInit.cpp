@@ -377,6 +377,10 @@ private:
     SDL_Rect textRect_;
 
     std::string currentText_;
+
+
+    SDL_Texture *characterTexture_;
+    Mix_Chunk *soundEffect_;
 };
 
 Interface::Interface() {
@@ -532,6 +536,12 @@ void Interface::render()
     SDL_RenderCopy(renderer_, backgroundTexture_, nullptr, &backgroundRect_);
 
     // 渲染立绘
+    SDL_Rect characterRect_;
+    characterRect_.x = 100;
+    characterRect_.y = 100;
+    characterRect_.w = 100;
+    characterRect_.h = 300;
+
     SDL_RenderCopy(renderer_, characterTexture_, nullptr, &characterRect_);
 
     // 渲染文字层
@@ -553,8 +563,8 @@ void Interface::run()
 
     backgroundRect_.x = 0;
     backgroundRect_.y = 0;
-    backgroundRect_.w = WINDOW_WIDTH;
-    backgroundRect_.h = WINDOW_HEIGHT;
+    backgroundRect_.w = 500;
+    backgroundRect_.h = 300;
 
 
     textRect_.x = TEXT_LAYER_X;
