@@ -350,7 +350,7 @@ const int TEXT_LAYER_HEIGHT = 100;
 // AVG游戏类
 class Interface {
 public:
-    Interface();
+    Interface(SDL_Window* window_, std::string root_path);
     ~Interface();
     void run();
 
@@ -362,9 +362,10 @@ private:
     void update();
     void render();
 
+    std::string root_path_;
     std::unique_ptr<core::Director> director_ = nullptr;
 
-    SDL_Window* window_ = nullptr;
+    SDL_Window* window_;
     SDL_Renderer* renderer_ = nullptr;
     SDL_Texture* backgroundTexture_ = nullptr;
 
@@ -383,7 +384,7 @@ private:
     Mix_Chunk *soundEffect_;
 };
 
-Interface::Interface() {
+Interface::Interface(SDL_Window* window_, std::string root_path) : window_(window_), root_path_(root_path) {
     initialize();
 }
 
@@ -395,7 +396,7 @@ Interface::~Interface()
 bool Interface::initialize()
 {
 
-    std::unique_ptr<core::Director> director_ = std::make_unique<core::Director>(R"(C:\LightSong\reference\games\Ever17\s60v5\Ever17)");
+    this->director_ = std::make_unique<core::Director>(root_path_);
 
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0) {
         std::cout << "SDL could not initialize! SDL_Error: " << SDL_GetError() << std::endl;
@@ -406,12 +407,19 @@ bool Interface::initialize()
         std::cout << "Warning: Linear texture filtering not enabled!" << std::endl;
     }
 
-    window_ = SDL_CreateWindow(director_->getConfig().gametitle.c_str(), SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, director_->getConfig().imagesize_width, director_->getConfig().imagesize_width, SDL_WINDOW_SHOWN);
+    // window_ = SDL_CreateWindow(director_->getConfig().gametitle.c_str(), SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, director_->getConfig().imagesize_width, director_->getConfig().imagesize_width, SDL_WINDOW_SHOWN);
     if (window_ == nullptr) {
         std::cout << "Window could not be created! SDL_Error: " << SDL_GetError() << std::endl;
         return false;
     }
+    SDL_SetWindowTitle(window_, director_->getConfig().gametitle.c_str());
+    SDL_SetWindowSize(window_, director_->getConfig().imagesize_width, director_->getConfig().imagesize_height);
 
+    // 强制销毁与窗口关联的渲染器（renderer）并设置新的渲染器
+    SDL_Renderer* foo_renderer_to_destroy = SDL_GetRenderer(window_);
+    if (foo_renderer_to_destroy != nullptr) {
+        SDL_DestroyRenderer(foo_renderer_to_destroy);
+    }
     renderer_ = SDL_CreateRenderer(window_, -1, SDL_RENDERER_ACCELERATED);
     if (renderer_ == nullptr) {
         std::cout << "Renderer could not be created! SDL_Error: " << SDL_GetError() << std::endl;
@@ -591,7 +599,9 @@ int main(int argc, char* argv[])
 {
     system("chcp 65001");
 
-    Interface game;
+    SDL_Window* window_ = SDL_CreateWindow("Hello, World!", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 320, 240, SDL_WINDOW_SHOWN);
+
+    Interface game(window_, R"(C:\LightSong\reference\games\Ever17\s60v5\Ever17)");
     game.run();
 
     return 0;
