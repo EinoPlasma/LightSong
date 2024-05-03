@@ -326,6 +326,7 @@
 #include <SDL2/SDL_image.h>
 #include <SDL2/SDL_ttf.h>
 #include <SDL2/SDL_mixer.h>
+#include <unordered_set>
 
 // TODO: se支持多通道
 const unsigned int CHANNEL_SE = 0;
@@ -354,7 +355,6 @@ private:
     SDL_Texture* backgroundTexture_ = nullptr;
 
     TTF_Font* font_ = nullptr;
-    std::string currentText_;
     SDL_Texture* textTexture_ = nullptr;
 
     Mix_Music* backgroundMusic_ = nullptr;
@@ -450,7 +450,7 @@ void Interface::loadMedia()
 
     // 创建文字纹理
     SDL_Color textColor = { 255, 255, 255 };
-    SDL_Surface* textSurface = TTF_RenderText_Solid(font_, "TEXT_CONTENT 测试文字", textColor);
+    SDL_Surface* textSurface = TTF_RenderUTF8_Solid(font_, "TEXT_CONTENT 测试文字", textColor);
     textTexture_ = SDL_CreateTextureFromSurface(renderer_, textSurface);
     SDL_FreeSurface(textSurface);
 
@@ -516,156 +516,188 @@ void Interface::update()
 //    if (soundEffect_ != nullptr) {
 //        Mix_PlayChannel(-1, soundEffect_, 0);
 //    }
+    // #waitkey指令没有加进去，它要求如果 5 秒后还没有按键，则继续执行下一条指令。
+    // #sel #select_text #select_var #select_img #select_imgs 还有 五、 系统类指令 都未加入
+    const std::unordered_set<sdl::SdlCommandType> waitKeyCommands = {sdl::SDL_SAY, sdl::SDL_TEXT, sdl::SDL_TITLE_DSP};
 
-    std::unique_ptr<sdl::SdlCommand> cmd = director_->nextSdlCommand();
-    sdl::SdlCommandType type = cmd->type();
-    if (type == sdl::SDL_SAY) {
-    } else if (type == sdl::SDL_TEXT) {
-    } else if (type == sdl::SDL_TEXT_OFF) {
-        // TEXT_OFF case
-    } else if (type == sdl::SDL_WAITKEY) {
-        // WAITKEY case
-    } else if (type == sdl::SDL_TITLE) {
-    } else if (type == sdl::SDL_TITLE_DSP) {
-        // TITLE_DSP case
-    } else if (type == sdl::SDL_CHARA) {
-        // CHARA case
-    } else if (type == sdl::SDL_CHARA_CLS) {
-        // CHARA_CLS case
-    } else if (type == sdl::SDL_CHARA_POS) {
-        // CHARA_POS case
-    } else if (type == sdl::SDL_BG) {
-        // BG case
-        auto targetCmd = dynamic_cast<sdl::SdlCommandBg*>(cmd.get());
-        SDL_Log("bg cmd: %s", targetCmd->filename.c_str());
-        backgroundTexture_ = IMG_LoadTexture(renderer_, (root_path_ + core::PATH_DIR_BG + targetCmd->filename + director_->getConfig().bgformat).c_str());
-    } else if (type == sdl::SDL_FLASH) {
-        // FLASH case
-    } else if (type == sdl::SDL_QUAKE) {
-        // QUAKE case
-    } else if (type == sdl::SDL_FADE_OUT) {
-        // FADE_OUT case
-    } else if (type == sdl::SDL_FADE_IN) {
-        // FADE_IN case
-    } else if (type == sdl::SDL_MOVIE) {
-        // MOVIE case
-    } else if (type == sdl::SDL_TEXTBOX) {
-        // TEXTBOX case
-    } else if (type == sdl::SDL_CHARA_QUAKE) {
-        // CHARA_QUAKE case
-    } else if (type == sdl::SDL_CHARA_DOWN) {
-        // CHARA_DOWN case
-    } else if (type == sdl::SDL_CHARA_UP) {
-        // CHARA_UP case
-    } else if (type == sdl::SDL_SCROLL) {
-        // SCROLL case
-    } else if (type == sdl::SDL_CHARA_Y) {
-        // CHARA_Y case
-    } else if (type == sdl::SDL_CHARA_SCROLL) {
-        // CHARA_SCROLL case
-    } else if (type == sdl::SDL_ANIME_ON) {
-        // ANIME_ON case
-    } else if (type == sdl::SDL_ANIME_OFF) {
-        // ANIME_OFF case
-    } else if (type == sdl::SDL_CHARA_ANIME) {
-        // CHARA_ANIME case
-    } else if (type == sdl::SDL_SEL) {
-        auto targetCmd = dynamic_cast<sdl::SdlCommandSel*>(cmd.get());
-    } else if (type == sdl::SDL_SELECT_TEXT) {
-        // SELECT_TEXT case
-    } else if (type == sdl::SDL_SELECT_VAR) {
-        // SELECT_VAR case
-    } else if (type == sdl::SDL_SELECT_IMG) {
-        // SELECT_IMG case
-    } else if (type == sdl::SDL_SELECT_IMGS) {
-        // SELECT_IMGS case
-    } else if (type == sdl::SDL_WAIT) {
-        // WAIT case
-    } else if (type == sdl::SDL_WAIT_SE) {
-        // WAIT_SE case
-    } else if (type == sdl::SDL_BGM) {
-        // BGM case
-        auto targetCmd = dynamic_cast<sdl::SdlCommandBgm*>(cmd.get());
-        std::string filename = root_path_ + core::PATH_DIR_BGM + targetCmd->filename + director_->getConfig().bgmformat;
-        // 每次更换BGM前记得把之前的BGM给free掉
-        Mix_FreeMusic(backgroundMusic_);
-        backgroundMusic_ = Mix_LoadMUS(filename.c_str());
-        if (backgroundMusic_ == nullptr) {
-            SDL_Log("SDL_Music: %s", Mix_GetError());
-            throw std::runtime_error("SDL_Music: " + std::string(Mix_GetError()));
+
+    bool flagWaitKey = false;
+    // 没有遇到在waitKeyCommands中的指令就一直问Director问指令，直到问到了要停下来的指令（waitKeyCommands中的指令）为止
+    while (!flagWaitKey) {
+        std::unique_ptr<sdl::SdlCommand> cmd = director_->nextSdlCommand();
+        sdl::SdlCommandType type = cmd->type();
+
+        if (waitKeyCommands.find(type) != waitKeyCommands.end()) {
+            flagWaitKey = true;
         }
-        if (targetCmd->isLoop) {
-            SDL_Log("bgm cmd: %s, Loop=true", filename.c_str());
-            Mix_PlayMusic(backgroundMusic_, -1);
+
+        if (type == sdl::SDL_SAY) {
+            auto targetCmd = dynamic_cast<sdl::SdlCommandSay*>(cmd.get());
+            SDL_Log("say cmd: %s", targetCmd->content.c_str());
+            // free previous text texture
+            if (textTexture_ != nullptr) {
+                SDL_DestroyTexture(textTexture_);
+                textTexture_ = nullptr;
+            }
+
+            if (targetCmd->flag_contains_name) {
+                // CONTAINS_NAME case
+            }
+
+            SDL_Color textColor = { 255, 255, 255 , 200};
+            // SDL_Surface* textSurface = TTF_RenderUTF8_Blended(font_, targetCmd->content.c_str(), textColor);
+            SDL_Surface* textSurface = TTF_RenderUTF8_Shaded_Wrapped(font_, ("[" + targetCmd->name + "] " + targetCmd->content).c_str(), textColor,  { 50, 50, 50 , 200}, 500);
+            textTexture_ = SDL_CreateTextureFromSurface(renderer_, textSurface);
+            SDL_FreeSurface(textSurface);
+        } else if (type == sdl::SDL_TEXT) {
+        } else if (type == sdl::SDL_TEXT_OFF) {
+            // TEXT_OFF case
+        } else if (type == sdl::SDL_WAITKEY) {
+            // WAITKEY case
+        } else if (type == sdl::SDL_TITLE) {
+        } else if (type == sdl::SDL_TITLE_DSP) {
+            // TITLE_DSP case
+        } else if (type == sdl::SDL_CHARA) {
+            // CHARA case
+        } else if (type == sdl::SDL_CHARA_CLS) {
+            // CHARA_CLS case
+        } else if (type == sdl::SDL_CHARA_POS) {
+            // CHARA_POS case
+        } else if (type == sdl::SDL_BG) {
+            // BG case
+            auto targetCmd = dynamic_cast<sdl::SdlCommandBg*>(cmd.get());
+            SDL_Log("bg cmd: %s", targetCmd->filename.c_str());
+            backgroundTexture_ = IMG_LoadTexture(renderer_, (root_path_ + core::PATH_DIR_BG + targetCmd->filename + director_->getConfig().bgformat).c_str());
+        } else if (type == sdl::SDL_FLASH) {
+            // FLASH case
+        } else if (type == sdl::SDL_QUAKE) {
+            // QUAKE case
+        } else if (type == sdl::SDL_FADE_OUT) {
+            // FADE_OUT case
+        } else if (type == sdl::SDL_FADE_IN) {
+            // FADE_IN case
+        } else if (type == sdl::SDL_MOVIE) {
+            // MOVIE case
+        } else if (type == sdl::SDL_TEXTBOX) {
+            // TEXTBOX case
+        } else if (type == sdl::SDL_CHARA_QUAKE) {
+            // CHARA_QUAKE case
+        } else if (type == sdl::SDL_CHARA_DOWN) {
+            // CHARA_DOWN case
+        } else if (type == sdl::SDL_CHARA_UP) {
+            // CHARA_UP case
+        } else if (type == sdl::SDL_SCROLL) {
+            // SCROLL case
+        } else if (type == sdl::SDL_CHARA_Y) {
+            // CHARA_Y case
+        } else if (type == sdl::SDL_CHARA_SCROLL) {
+            // CHARA_SCROLL case
+        } else if (type == sdl::SDL_ANIME_ON) {
+            // ANIME_ON case
+        } else if (type == sdl::SDL_ANIME_OFF) {
+            // ANIME_OFF case
+        } else if (type == sdl::SDL_CHARA_ANIME) {
+            // CHARA_ANIME case
+        } else if (type == sdl::SDL_SEL) {
+            auto targetCmd = dynamic_cast<sdl::SdlCommandSel*>(cmd.get());
+        } else if (type == sdl::SDL_SELECT_TEXT) {
+            // SELECT_TEXT case
+        } else if (type == sdl::SDL_SELECT_VAR) {
+            // SELECT_VAR case
+        } else if (type == sdl::SDL_SELECT_IMG) {
+            // SELECT_IMG case
+        } else if (type == sdl::SDL_SELECT_IMGS) {
+            // SELECT_IMGS case
+        } else if (type == sdl::SDL_WAIT) {
+            // WAIT case
+        } else if (type == sdl::SDL_WAIT_SE) {
+            // WAIT_SE case
+        } else if (type == sdl::SDL_BGM) {
+            // BGM case
+            auto targetCmd = dynamic_cast<sdl::SdlCommandBgm*>(cmd.get());
+            std::string filename = root_path_ + core::PATH_DIR_BGM + targetCmd->filename + director_->getConfig().bgmformat;
+            // 每次更换BGM前记得把之前的BGM给free掉
+            Mix_FreeMusic(backgroundMusic_);
+            backgroundMusic_ = Mix_LoadMUS(filename.c_str());
+            if (backgroundMusic_ == nullptr) {
+                SDL_Log("SDL_Music: %s", Mix_GetError());
+                throw std::runtime_error("SDL_Music: " + std::string(Mix_GetError()));
+            }
+            if (targetCmd->isLoop) {
+                SDL_Log("bgm cmd: %s, Loop=true", filename.c_str());
+                Mix_PlayMusic(backgroundMusic_, -1);
+            } else {
+                SDL_Log("bgm cmd: %s, Loop=false", filename.c_str());
+                Mix_PlayMusic(backgroundMusic_, 0);
+            }
+        } else if (type == sdl::SDL_BGM_STOP) {
+            // BGM_STOP case
+            if (Mix_PlayingMusic() != 0) {
+                // Returns non-zero if music is playing, zero otherwise.
+                const int SDL_BGM_STOP_FADE_OUT_TIME = 500;
+                Mix_FadeOutMusic(SDL_BGM_STOP_FADE_OUT_TIME);
+            }
+        } else if (type == sdl::SDL_SE) {
+            // SE case
+            auto targetCmd = dynamic_cast<sdl::SdlCommandSe*>(cmd.get());
+            targetCmd->filename = root_path_ + core::PATH_DIR_SE + targetCmd->filename + director_->getConfig().seformat;
+            // load se support .mp3 .ogg .wav formats
+            Mix_Chunk* se = Mix_LoadWAV(targetCmd->filename.c_str());
+            // play
+            if(se == nullptr) {
+                throw std::runtime_error("SDL_SE: " + std::string(Mix_GetError()));
+            }
+            if (targetCmd->isLoop) {
+                SDL_Log("se cmd: %s, Loop=true", targetCmd->filename.c_str());
+                Mix_PlayChannel(CHANNEL_SE, se, -1);
+            } else {
+                SDL_Log("se cmd: %s, Loop=false", targetCmd->filename.c_str());
+                Mix_PlayChannel(CHANNEL_SE, se, 0);
+            }
+        } else if (type == sdl::SDL_SE_STOP) {
+            // SE_STOP case
+            const int SDL_SE_STOP_FADE_OUT_TIME = 100;
+            Mix_FadeOutChannel(CHANNEL_SE, SDL_SE_STOP_FADE_OUT_TIME);
+        } else if (type == sdl::SDL_VO) {
+            // VO case
+            auto targetCmd = dynamic_cast<sdl::SdlCommandVo*>(cmd.get());
+            targetCmd->filename = root_path_ + core::PATH_DIR_VOICE + targetCmd->filename + director_->getConfig().voiceformat;
+            // load se support .mp3 .ogg .wav formats
+            Mix_Chunk* vo = Mix_LoadWAV(targetCmd->filename.c_str());
+            // play
+            if(vo == nullptr) {
+                throw std::runtime_error("SDL_VO: " + std::string(Mix_GetError()));
+            }
+            SDL_Log("vo cmd: %s", targetCmd->filename.c_str());
+            // halt if CHANNEL_VOICE is playing
+            if (Mix_Playing(CHANNEL_VOICE)) {
+                Mix_HaltChannel(CHANNEL_VOICE);
+            }
+            // Check if CHANNEL_VOICE is still playing after halting
+            if (Mix_Playing(CHANNEL_VOICE)) {
+                // Wait until CHANNEL_VOICE is not playing
+                while (Mix_Playing(CHANNEL_VOICE)) {
+                    SDL_Delay(100); // Wait for 100 milliseconds
+                }
+            }
+            //TODO: bug, 一段vo没播放完就播下一个vo会崩溃。se可能也有这个bug
+            Mix_PlayChannel(CHANNEL_VOICE, vo, 0);
+        } else if (type == sdl::SDL_LOAD) {
+            // LOAD case
+        } else if (type == sdl::SDL_ALBUM) {
+            // ALBUM case
+        } else if (type == sdl::SDL_MUSIC) {
+            // MUSIC case
+        } else if (type == sdl::SDL_DATE) {
+            // DATE case
+        } else if (type == sdl::SDL_CONFIG) {
+            // CONFIG case
         } else {
-            SDL_Log("bgm cmd: %s, Loop=false", filename.c_str());
-            Mix_PlayMusic(backgroundMusic_, 0);
+            // Default case
+            throw std::runtime_error("Unknown command type: " + std::to_string(type));
+            // std::cerr << "Unknown command type: " << type << std::endl;
         }
-    } else if (type == sdl::SDL_BGM_STOP) {
-        // BGM_STOP case
-        if (Mix_PlayingMusic() != 0) {
-            // Returns non-zero if music is playing, zero otherwise.
-            const int SDL_BGM_STOP_FADE_OUT_TIME = 500;
-            Mix_FadeOutMusic(SDL_BGM_STOP_FADE_OUT_TIME);
-        }
-    } else if (type == sdl::SDL_SE) {
-        // SE case
-        auto targetCmd = dynamic_cast<sdl::SdlCommandSe*>(cmd.get());
-        targetCmd->filename = root_path_ + core::PATH_DIR_SE + targetCmd->filename + director_->getConfig().seformat;
-        // load se support .mp3 .ogg .wav formats
-        Mix_Chunk* se = Mix_LoadWAV(targetCmd->filename.c_str());
-        // play
-        if(se == nullptr) {
-            throw std::runtime_error("SDL_SE: " + std::string(Mix_GetError()));
-        }
-        if (targetCmd->isLoop) {
-            SDL_Log("se cmd: %s, Loop=true", targetCmd->filename.c_str());
-            Mix_PlayChannel(CHANNEL_SE, se, -1);
-        } else {
-            SDL_Log("se cmd: %s, Loop=false", targetCmd->filename.c_str());
-            Mix_PlayChannel(CHANNEL_SE, se, 0);
-        }
-    } else if (type == sdl::SDL_SE_STOP) {
-        // SE_STOP case
-        const int SDL_SE_STOP_FADE_OUT_TIME = 100;
-        Mix_FadeOutChannel(CHANNEL_SE, SDL_SE_STOP_FADE_OUT_TIME);
-    } else if (type == sdl::SDL_VO) {
-        // VO case
-        auto targetCmd = dynamic_cast<sdl::SdlCommandVo*>(cmd.get());
-        targetCmd->filename = root_path_ + core::PATH_DIR_VOICE + targetCmd->filename + director_->getConfig().voiceformat;
-        // load se support .mp3 .ogg .wav formats
-        Mix_Chunk* vo = Mix_LoadWAV(targetCmd->filename.c_str());
-        // play
-        if(vo == nullptr) {
-            throw std::runtime_error("SDL_VO: " + std::string(Mix_GetError()));
-        }
-        SDL_Log("vo cmd: %s", targetCmd->filename.c_str());
-        // halt if CHANNEL_VOICE is playing
-        if (Mix_Playing(CHANNEL_VOICE)) {
-            Mix_HaltChannel(CHANNEL_VOICE);
-        }
-        //TODO: bug, 一段vo没播放完就播下一个vo会崩溃。se可能也有这个bug
-        Mix_PlayChannel(CHANNEL_VOICE, vo, 0);
-    } else if (type == sdl::SDL_LOAD) {
-        // LOAD case
-    } else if (type == sdl::SDL_ALBUM) {
-        // ALBUM case
-    } else if (type == sdl::SDL_MUSIC) {
-        // MUSIC case
-    } else if (type == sdl::SDL_DATE) {
-        // DATE case
-    } else if (type == sdl::SDL_CONFIG) {
-        // CONFIG case
-    } else {
-        // Default case
-        throw std::runtime_error("Unknown command type: " + std::to_string(type));
-        // std::cerr << "Unknown command type: " << type << std::endl;
     }
-
-
-
-
-
 
 
 }
@@ -688,6 +720,7 @@ void Interface::render()
 //    SDL_RenderCopy(renderer_, characterTexture_, nullptr, &characterRect_);
 
     // 渲染文字层
+    SDL_QueryTexture(textTexture_, NULL, NULL, &textRect_.w, &textRect_.h);
     SDL_RenderCopy(renderer_, textTexture_, nullptr, &textRect_);
 
     // 更新屏幕显示
@@ -710,12 +743,10 @@ void Interface::run()
     backgroundRect_.h = director_->getConfig().imagesize_height;
 
 
-    textRect_.x = 20;
-    textRect_.y = 20;
+    textRect_.x = 0;
+    textRect_.y = 0;
     textRect_.w = 400;
     textRect_.h = 100;
-
-    currentText_ = "TEXT_CONTENT currentText_测试文字";
 
     if (backgroundMusic_ != nullptr) {
         Mix_PlayMusic(backgroundMusic_, -1);

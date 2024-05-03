@@ -10,8 +10,6 @@ add_executable(LightSong sdlInit.cpp
         core/Command.cpp
         core/Parser.cpp
         core/Command.h
-        compose/Sound.h
-        compose/Sound.cpp
         core/Director.cpp
         core/Director.h
         core/GameConfig.h
