@@ -56,6 +56,8 @@ namespace core {
         CallStackItem popCallStack();
 
         const GameConfig& getConfig() const;
+
+        unsigned int getFontSize() const;
     };
 
 } // core

@@ -92,5 +92,10 @@ namespace core {
         config = loadGameConfig(config_path);
     }
 
+    unsigned int Environment::getFontSize() const {
+        // TODO: 增加存档系统，然后从存档中查询有没有自定义的fontsize，有的话就用自定义的。
+        return config->fontsize;
+    }
+
 
 } // core

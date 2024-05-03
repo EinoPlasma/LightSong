@@ -31,11 +31,31 @@ namespace core {
         // make labelMap
         for(int i=0; i < lines.size(); i++){
             if (peek(i)->type() == LABEL) {
+                // TODO: 内存bug。控制台无尽输出，提示cmd_label->label_name的内存已经被破坏
+
+//                遇到了内存错误，auto cmd_label = dynamic_cast<CommandLabel*>(peek(i).get());
+//                std::cout << "cmd_label: " << cmd_label->label_name << std::endl;。这样无尽输出，提示cmd_label->label_name的内存已经被破坏。label_name class CommandLabel : public Command {
+//                public:
+//                    std::string label_name;
+//                    CommandType type() override { return LABEL; }
+//
+//                    explicit CommandLabel(const std::vector<std::string>& params) {
+//                        if (params.size() != 1) {
+//                            throw std::invalid_argument("Invalid parameter size. Expected 1 parameter.");
+//                        }
+//                        label_name = params[0];
+//                    }
+//                };
+
                 auto cmd_label = dynamic_cast<CommandLabel*>(peek(i).get());
-                if (labelMap.find(cmd_label->label_name) != labelMap.end()) {
-                    throw std::runtime_error("label has been defined multiple times.");
+                if (cmd_label) {
+                    std::cout << "cmd_label: " << cmd_label->label_name << std::endl;
+                    if (labelMap.find(cmd_label->label_name) != labelMap.end()) {
+                        throw std::runtime_error("label has been defined multiple times.");
+                    }
+                    labelMap[cmd_label->label_name] = i;
                 }
-                labelMap[cmd_label->label_name] = i;
+                throw std::runtime_error("invalid label.");
             }
         }
     }

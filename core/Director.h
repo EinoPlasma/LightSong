@@ -29,7 +29,6 @@ namespace core {
         std::unique_ptr<cli::CliCommand> nextCliCommand();
 
         std::unique_ptr<sdl::SdlCommand> nextSdlCommand();
-
     };
 
     std::unique_ptr<sdl::SdlCommand> createSdlCommand(std::unique_ptr<core::Command>& command);

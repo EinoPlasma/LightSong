@@ -327,7 +327,6 @@
 #include <SDL2/SDL_ttf.h>
 #include <SDL2/SDL_mixer.h>
 
-
 // AVG游戏类
 class Interface {
 public:
@@ -350,6 +349,8 @@ private:
     SDL_Renderer* renderer_ = nullptr;
     SDL_Texture* backgroundTexture_ = nullptr;
 
+    std::string font_path;
+    unsigned int font_size;
     TTF_Font* font_ = nullptr;
     std::string currentText_;
     SDL_Texture* textTexture_ = nullptr;
@@ -451,7 +452,6 @@ void Interface::loadMedia()
 //    if (backgroundMusic_ == nullptr) {
 //        std::cout << "Failed to load background music! SDL_mixer Error: " << Mix_GetError() << std::endl;
 //    }
-
 //    // 加载音效
 //    soundEffect_ = Mix_LoadWAV((RESOURCE_PATH + SOUND_EFFECT_FILE).c_str());
 //    if (soundEffect_ == nullptr) {
@@ -603,10 +603,6 @@ void Interface::update()
 
 
 
-
-
-
-
 }
 
 void Interface::render()
@@ -617,6 +613,7 @@ void Interface::render()
     // 渲染背景
     SDL_RenderCopy(renderer_, backgroundTexture_, nullptr, &backgroundRect_);
 
+
 //    // 渲染立绘
 //    SDL_Rect characterRect_;
 //    characterRect_.x = 100;
@@ -625,6 +622,7 @@ void Interface::render()
 //    characterRect_.h = 300;
 //
 //    SDL_RenderCopy(renderer_, characterTexture_, nullptr, &characterRect_);
+
 
     // 渲染文字层
     SDL_RenderCopy(renderer_, textTexture_, nullptr, &textRect_);
@@ -649,12 +647,14 @@ void Interface::run()
     backgroundRect_.h = director_->getConfig().imagesize_height;
 
 
+
     textRect_.x = 20;
     textRect_.y = 20;
     textRect_.w = 400;
     textRect_.h = 100;
 
     currentText_ = "TEXT_CONTENT currentText_测试文字";
+
 
     if (backgroundMusic_ != nullptr) {
         Mix_PlayMusic(backgroundMusic_, -1);
@@ -680,9 +680,6 @@ int main(int argc, char* argv[])
 
     return 0;
 }
-
-
-
 
 
 //
