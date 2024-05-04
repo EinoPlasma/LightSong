@@ -29,15 +29,34 @@ namespace core {
         }
 
         // make labelMap
+        /*
+         * 逆天bug：原来的代码在普通编译时没问题，调试时就在“if (labelMap.find(cmd_label->label_name) != labelMap.end())”这句话segment fault，解决的方法是把原来做了两遍peek(i)换成一遍（存在变量cmd中），就nm解决了
+         * 逆天bug成因：因为Command里面的字符串都是`字符串引用`，两次peek(i)创建的是不同的对象，但只有第一次peek(i)拿到了从parser.source来的那部分字符串切片的所有权，第二次peek(i)就拿不到了
+         * （除非把第一次的peek(i)生成打那个unique_ptr<Command>销毁，这时这段字符串切片的所有权就会还回去，才能让第二次peek(i)拿到所有权）
+         * 也可能是是第二次peek(i)的时候字符串已经被unique_ptr销毁掉了，得做实验看看
+         */
         for(int i=0; i < lines.size(); i++){
-            if (peek(i)->type() == LABEL) {
-                auto cmd_label = dynamic_cast<CommandLabel*>(peek(i).get());
+            auto cmd = peek(i);
+            if (cmd->type() == LABEL) {
+                auto cmd_label = dynamic_cast<CommandLabel*>(cmd.get());
                 if (labelMap.find(cmd_label->label_name) != labelMap.end()) {
-                    throw std::runtime_error("label has been defined multiple times.");
+                    std::cerr << "Label " << cmd_label->label_name << " has been defined multiple times." << std::endl;
+                    // throw std::runtime_error("label has been defined multiple times.");
                 }
                 labelMap[cmd_label->label_name] = i;
             }
         }
+        // 下面是有上述bug的版本
+//        for(int i=0; i < lines.size(); i++){
+//            if (peek(i)->type() == LABEL) {
+//                auto cmd_label = dynamic_cast<CommandLabel*>(peek(i).get());
+//                if (labelMap.find(cmd_label->label_name) != labelMap.end()) {
+//                    throw std::runtime_error("label has been defined multiple times.");
+//                }
+//                labelMap[cmd_label->label_name] = i;
+//            }
+//        }
+
 
     }
 
