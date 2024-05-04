@@ -20,6 +20,6 @@ add_executable(LightSong sdlInit.cpp
         platform/cli/Interface.cpp
         platform/cli/Interface.h
         platform/cli/CliCommand.cpp
-        platform/cli/CliCommand.h core/Environment.cpp core/Environment.h platform/sdl/SdlCommand.cpp platform/sdl/SdlCommand.h platform/sdl/Interface.cpp platform/sdl/Interface.h sdlInit.cpp)
+        platform/cli/CliCommand.h core/Environment.cpp core/Environment.h platform/sdl/SdlCommand.cpp platform/sdl/SdlCommand.h platform/sdl/Interface.cpp platform/sdl/Interface.h sdlInit.cpp platform/sdl/compose/Character.cpp platform/sdl/compose/Character.h)
 
 target_link_libraries(LightSong PRIVATE SDL2::SDL2main SDL2::SDL2 SDL2::SDL2_image SDL2::SDL2_ttf SDL2::SDL2_mixer)

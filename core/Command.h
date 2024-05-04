@@ -199,6 +199,11 @@ namespace core {
 
         explicit CommandText(const std::vector<std::string>& params) {
             if (params.size() != 7 && params.size() != 8) {
+                // print params
+                std::cerr << "CommandText: " << params.size() << std::endl;
+                for (size_t i = 0; i < params.size(); i++) {
+                    std::cerr << i << ": " << params[i] << std::endl;
+                }
                 throw std::invalid_argument("Invalid parameter size. Expected 7 or 8 parameters.");
             }
             if (params.size() >= 7) {
@@ -264,7 +269,12 @@ namespace core {
         CommandType type() override { return CHARA; }
 
         explicit CommandChara(const std::vector<std::string>& params) {
-            if ((params.size() - 1) % 4 == 0) {
+            if ((params.size() - 1) % 4 != 0) {
+                // print params
+                std::cerr << "CommandChara: " << params.size() << std::endl;
+                for (size_t i = 0; i < params.size(); i++) {
+                    std::cerr << i << ": " << params[i] << std::endl;
+                }
                 throw std::invalid_argument("Invalid parameter size. Expected (params.size() - 1) % 4 == 0 parameters.");
             }
             // Parse the parameters and populate the charaInfos vector
@@ -504,7 +514,12 @@ namespace core {
         CommandType type() override { return CHARA_Y; }
 
         explicit CommandCharaY(const std::vector<std::string>& params) {
-            if ((params.size() - 2) % 5 == 0) {
+            if ((params.size() - 2) % 5 != 0) {
+                // print params
+                std::cerr << "CommandCharaY: " << params.size() << std::endl;
+                for (size_t i = 0; i < params.size(); i++) {
+                    std::cerr << i << ": " << params[i] << std::endl;
+                }
                 throw std::invalid_argument("Invalid parameter size. Expected (params.size() - 2) % 5 == 0 parameters.");
             }
 
@@ -916,8 +931,13 @@ namespace core {
 
         explicit CommandSelectImgs(const std::vector<std::string>& params) {
             choiceNum = std::stoi(params[0]);
-            if (params.size() != choiceNum * 4 + 1) {
-                throw std::invalid_argument("Invalid parameter size. Expected `choiceNum * 4 + 1` parameters.");
+            if (params.size() != choiceNum * 4 + 2) {
+                // print params
+                std::cerr << "CommandSelectImgs: " << params.size() << std::endl;
+                for (int i = 0; i < params.size(); i++) {
+                    std::cerr << i << ": " << params[i] << std::endl;
+                }
+                throw std::invalid_argument("Invalid parameter size. Expected `choiceNum * 4 + 2` parameters.");
             }
             for (int i = 0; i < choiceNum; i++) {
                 filenames.push_back(params[i * 4 + 1]);
