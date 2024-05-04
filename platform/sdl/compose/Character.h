@@ -13,6 +13,8 @@
 #include <unordered_map>
 #include "memory"
 
+#include "Composer.h"
+
 namespace sdl {
 
     /*
@@ -68,7 +70,7 @@ coord_mode x 坐标表示的含义 y 坐标表示的含义
     const unsigned int CHARACTER_ANIMATION_DEFAULT_QUAKE_AMPLITUDE = 10;
 
 
-    class Character {
+    class Character : public Composer{
     private:
         struct CharaAnimation {
             AnimationMode mode;

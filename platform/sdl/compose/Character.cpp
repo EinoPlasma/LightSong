@@ -12,7 +12,6 @@ namespace sdl {
 
 
     void Character::update(unsigned int dt) {
-        SDL_Log("Character::update, dt: %d", dt);
         // fade in, fade out and free
         // free
         characters.erase(std::remove_if(characters.begin(), characters.end(), [](const std::shared_ptr<CharaInfo>& character) {
@@ -33,8 +32,8 @@ namespace sdl {
                     if (character->animation.timeElapsed < character->animation.time) {
                         character->alpha = (int)((float)255 * (float)character->animation.timeElapsed / (float)character->animation.time);
                         // print all process of calculate
-                        SDL_Log("character->animation.timeElapsed: %d, character->animation.time: %d", character->animation.timeElapsed, character->animation.time);
-                        SDL_Log("character alpha: %d", character->alpha);
+//                        SDL_Log("character->animation.timeElapsed: %d, character->animation.time: %d", character->animation.timeElapsed, character->animation.time);
+//                        SDL_Log("character alpha: %d", character->alpha);
                     }
                 } else {
                     if (character->animation.timeElapsed < character->animation.time) {
@@ -209,7 +208,7 @@ namespace sdl {
     }
 
     void Character::render() {
-        std::cout << "render character 0" << std::endl;
+        // TODO: 按立绘图层编号顺序显示
         for (auto it = characters.begin(); it != characters.end(); ++it) {
             std::shared_ptr<CharaInfo> character = *it;
 
@@ -222,16 +221,11 @@ namespace sdl {
             }
 
             SDL_SetTextureAlphaMod(character->charaTexture, character->alpha);
-            std::cout << "character->alpha" << character->alpha << std::endl;
 
             int rendererWidth, rendererHeight;
             SDL_GetRendererOutputSize(renderer, &rendererWidth, &rendererHeight);
             SDL_Rect targetrRect = {(int)(((float)character->x / 100) * rendererWidth), (int)(((float)character->y / 100) * rendererHeight), 100, 100};
             SDL_QueryTexture(character->charaTexture, NULL, NULL, &targetrRect.w, &targetrRect.h);
-
-            // targetrRect = {0,0,250,400};
-
-            std::cout << character->charaTexture << std::endl;
 
             SDL_RenderCopy(renderer, character->charaTexture, nullptr, &targetrRect);
             // SDL_RenderCopy(renderer, testTexture, nullptr, &targetrRect);

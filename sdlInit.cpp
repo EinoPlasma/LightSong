@@ -6,6 +6,9 @@
 #include "core/EnginePath.h"
 
 #include "platform/sdl/compose/Character.h"
+#include "platform/sdl/compose/ui/UI.h"
+#include "platform/sdl/compose/ui/SelectionUI.h"
+#include "platform/sdl/compose/ui/BlankUI.h"
 
 #include <iostream>
 #include <SDL2/SDL.h>
@@ -33,9 +36,10 @@ private:
     void readAndExecuteCommands();
 
     std::string root_path_;
-    std::unique_ptr<core::Director> director_ = nullptr;
+    std::shared_ptr<core::Director> director_ = nullptr;
 
     std::unique_ptr<sdl::Character> character_ = nullptr;
+    std::unique_ptr<sdl::UI> ui_ = nullptr;
 
     SDL_Window* window_;
     SDL_Renderer* renderer_ = nullptr;
@@ -62,7 +66,7 @@ Interface::~Interface()
 bool Interface::initialize()
 {
 
-    director_ = std::make_unique<core::Director>(root_path_);
+    director_ = std::make_shared<core::Director>(root_path_);
 
 
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0) {
@@ -93,6 +97,8 @@ bool Interface::initialize()
     }
 
     character_ = std::make_unique<sdl::Character>(renderer_, root_path_ + core::PATH_DIR_CHARA, director_->getConfig().charaformat);
+
+    ui_ = std::make_unique<sdl::BlankUI>();
 
     // int imgFlags = IMG_INIT_PNG | IMG_INIT_JPG | IMG_INIT_TIF | IMG_INIT_WEBP | IMG_INIT_AVIF | IMG_INIT_JXL;
     // TODO: 发布时修改此项支持更多格式
@@ -181,47 +187,53 @@ void Interface::handleEvents()
             exit(0);
         }
         else if (e.type == SDL_KEYDOWN) {
+
             if (e.key.keysym.sym == SDLK_SPACE) {
-                // 执行下一条指令
-                readAndExecuteCommands();
+
+                if (ui_ != nullptr && !ui_->isUiAlive()){
+                    // 执行下一条指令，仅在ui_不开启时进行。有ui的话就显示ui，不在读新指令
+                    readAndExecuteCommands();
+                }
+
             }
+
             // quit if window is closed
             else if (e.key.keysym.sym == SDLK_q) {
                 close();
                 exit(0);
             }
         }
+
+
+        if (ui_ != nullptr){
+            ui_->handleSdlEvent(&e);
+        } else {
+            SDL_Log("Interface::handleEvents, ui_->handleSdlEvent(&e) failed. ui_ is null");
+        }
     }
 }
 
 void Interface::update(unsigned int dt) {
-    std::cout << "update character init" << std::endl;
-    character_->update(dt);
-    std::cout << "update character success" << std::endl;
-
+    if (character_ != nullptr) {
+        character_->update(dt);
+    } else {
+        SDL_Log("Interface::update, character_->update(dt) failed. Character is null");
+    }
+    if (ui_ != nullptr){
+        ui_->update(dt);
+    } else {
+        SDL_Log("Interface::update, ui_->update(dt) failed. ui_ is null");
+    }
 }
 
 void Interface::readAndExecuteCommands()
 {
     // 切换背景、立绘、文字等逻辑处理
-    // ...
 
-//    SDL_Surface* backgroundSurface = IMG_Load((RESOURCE_PATH + "background2.png").c_str());
-//    backgroundTexture_ = SDL_CreateTextureFromSurface(renderer_, backgroundSurface);
-//    SDL_FreeSurface(backgroundSurface);
-//
-//    backgroundRect_.x += 10;
-//
-//    SDL_SetTextureAlphaMod(characterTexture_, 100);
-//
-//    // 播放音效
-//    if (soundEffect_ != nullptr) {
-//        Mix_PlayChannel(-1, soundEffect_, 0);
-//    }
+
     // #waitkey指令没有加进去，它要求如果 5 秒后还没有按键，则继续执行下一条指令。
     // #sel #select_text #select_var #select_img #select_imgs 还有 五、 系统类指令 都未加入
-    const std::unordered_set<sdl::SdlCommandType> waitKeyCommands = {sdl::SDL_SAY, sdl::SDL_TEXT, sdl::SDL_TITLE_DSP};
-
+    const std::unordered_set<sdl::SdlCommandType> waitKeyCommands = {sdl::SDL_SAY, sdl::SDL_TEXT, sdl::SDL_TITLE_DSP, sdl::SDL_SEL};
 
     bool flagWaitKey = false;
     // 没有遇到在waitKeyCommands中的指令就一直问Director问指令，直到问到了要停下来的指令（waitKeyCommands中的指令）为止
@@ -314,6 +326,14 @@ void Interface::readAndExecuteCommands()
             // CHARA_ANIME case
         } else if (type == sdl::SDL_SEL) {
             auto targetCmd = dynamic_cast<sdl::SdlCommandSel*>(cmd.get());
+            SDL_Log("sel cmd: %d", targetCmd->choiceNum);
+            for(int i = 0; i < targetCmd->choiceNum; i++) {
+                SDL_Log("choice %d: %s", i, targetCmd->choiceTexts[i].c_str());
+            }
+            // std::unique_ptr<SelectionUI> createSelectionUiFromSel(SDL_Renderer* renderer, const std::shared_ptr<core::Director>& director, TTF_Font *font, const std::vector<std::string>& selections)
+            // SDL_Log("create selection ui from sel");
+            ui_ = sdl::createSelectionUiFromSel(renderer_, director_, font_, targetCmd->choiceTexts);
+
         } else if (type == sdl::SDL_SELECT_TEXT) {
             // SELECT_TEXT case
         } else if (type == sdl::SDL_SELECT_VAR) {
@@ -429,7 +449,18 @@ void Interface::render()
     SDL_RenderCopy(renderer_, backgroundTexture_, nullptr, &backgroundRect_);
 
     // 渲染立绘
-    character_->render();
+    if (character_ != nullptr) {
+        character_->render();
+    } else {
+        SDL_Log("Interface::render, character_->render() failed. Character is null");
+    }
+
+    // 渲染ui
+    if (ui_ != nullptr) {
+        ui_->render();
+    } else {
+        SDL_Log("Interface::render, ui_->render() failed. ui_ is null");
+    }
 
 //    SDL_Rect characterRect_;
 //    characterRect_.x = 100;
@@ -479,17 +510,17 @@ void Interface::run()
     bool quit = false;
     while (!quit) {
         // main loop
-        const unsigned int DEFAULT_DT = 4;
+        const unsigned int DEFAULT_DT = 5;
 
         auto current_time = std::chrono::steady_clock::now();
-        unsigned int dt = DEFAULT_DT;
+        unsigned int dt = DEFAULT_DT; // TODO: use a real delay time
         // unsigned int dt = std::chrono::duration_cast<std::chrono::milliseconds>(current_time - last_time).count() / 100;
         last_time = current_time;
-        SDL_Log("main loop update, dt: %d", dt);
+        // SDL_Log("main loop update, dt: %d", dt);
         handleEvents();
         update(dt);
         render();
-        SDL_Delay(DEFAULT_DT - 1); // TODO: set a const
+        SDL_Delay(DEFAULT_DT - 3); // TODO: set a const
     }
 }
 
