@@ -84,20 +84,30 @@ namespace sdl {
         }
 
         SDL_Texture* _characterTexture = IMG_LoadTexture(renderer, (charaPath + filename + charaImgFormat).c_str());
-        if (SDL_QueryTexture(_characterTexture, NULL, NULL, NULL, NULL) != 0) {
+        int _characterTextureWidth, _characterTextureHeight;
+        if (SDL_QueryTexture(_characterTexture, NULL, NULL, &_characterTextureWidth, &_characterTextureHeight) != 0) {
             std::cout << "read character failed: " << SDL_GetError() << std::endl;
             throw std::runtime_error("read character failed");
         }
 
-
         std::shared_ptr<CharaInfo> characterInfo = std::make_shared<CharaInfo>(_characterTexture);
+
+        // calculate y
+        int rendererWidth, rendererHeight;
+        SDL_GetRendererOutputSize(renderer, &rendererWidth, &rendererHeight);
+        characterInfo->y = (int)((float)(rendererHeight - _characterTextureHeight) / (float)rendererHeight * (float)100) + 1;
+
+        // calculate x
+        characterInfo->x = position - (int)((float)(_characterTextureWidth) / (float)rendererWidth * (float)100 / 2);
 
         characterInfo->isAlive = true;
         characterInfo->charaID = charaID;
         characterInfo->filename = filename;
-        characterInfo->x = position;
         characterInfo->layer = layer;
         characterInfo->animation = CharaAnimation{AnimationMode::FADE_IN,fadeTime,0};
+
+
+
 
 
         // testTexture = IMG_LoadTexture(renderer, (charaPath + filename + charaImgFormat).c_str());
@@ -124,11 +134,13 @@ namespace sdl {
         // find charaID, if found ,change it. if not found, push it to characters
         bool flagFoundCharaID = false;
         for(auto it = characters.begin(); it != characters.end(); it++) {
-            std::shared_ptr<CharaInfo> character = *it;
-            if (character->charaID == charaID) {
+            std::shared_ptr<CharaInfo> oldCharacter = *it;
+            if (oldCharacter->charaID == charaID) {
+                SDL_DestroyTexture(oldCharacter->charaTexture);// free
+
                 characterInfo->alpha = 255; // 把0 alpha改成255
                 characterInfo->animation = CharaAnimation{AnimationMode::NONE,0,0}; // 关闭动画
-                *it = characterInfo;
+                *it = characterInfo; // TODO: 这样直接替换可能会泄露内存
                 flagFoundCharaID = true;
             }
         } if (!flagFoundCharaID) {
