@@ -6,6 +6,7 @@
 #include <iostream>
 #include "cmath"
 #include "Character.h"
+#include "../sdlUtils.h"
 
 namespace sdl {
 
@@ -56,14 +57,14 @@ namespace sdl {
             if (character->animation.mode == AnimationMode::UP) {
                 // std::cerr << "up character animation not implemented" << std::endl;
                 // make a quadratic function to character->y
-                character->y = character->animation.restoreY - (character->animation.restoreY - character->y) * character->animation.timeElapsed / character->animation.time * character->animation.time;
+                character->centerYPercent = character->animation.restoreY - (character->animation.restoreY - character->centerYPercent) * character->animation.timeElapsed / character->animation.time * character->animation.time;
             } else if (character->animation.mode == AnimationMode::DOWN) {
                 //std::cerr << "down character animation not implemented" << std::endl;
                 // make a quadratic function to character->y
-                character->y = character->animation.restoreY + (character->animation.restoreY - character->y) * character->animation.timeElapsed / character->animation.time * character->animation.time;
+                character->centerYPercent = character->animation.restoreY + (character->animation.restoreY - character->centerYPercent) * character->animation.timeElapsed / character->animation.time * character->animation.time;
             } else if (character->animation.mode == AnimationMode::QUAKE) {
                 // make a sig wave to character->x
-                character->x = character->animation.restoreX + sin(character->animation.timeElapsed / character->animation.time * 2 * M_PI) * CHARACTER_ANIMATION_DEFAULT_QUAKE_AMPLITUDE;
+                character->centerYPercent = character->animation.restoreX + sin(character->animation.timeElapsed / character->animation.time * 2 * M_PI) * CHARACTER_ANIMATION_DEFAULT_QUAKE_AMPLITUDE;
             } else if (character->animation.mode == AnimationMode::IMMEDIATELY_DISPLAY) {
                 character->alpha = 255;
             } else if (character->animation.mode == AnimationMode::NONE) {
@@ -91,13 +92,21 @@ namespace sdl {
 
         std::shared_ptr<CharaInfo> characterInfo = std::make_shared<CharaInfo>(_characterTexture);
 
-        // calculate y
+//        // calculate y
+//        int rendererWidth, rendererHeight;
+//        SDL_GetRendererOutputSize(renderer, &rendererWidth, &rendererHeight);
+//        characterInfo->y = (int)((float)(rendererHeight - _characterTextureHeight) / (float)rendererHeight * (float)100) + 1;
+//
+//        // calculate x
+//        characterInfo->x = position - (int)((float)(_characterTextureWidth) / (float)rendererWidth * (float)100 / 2);
+
+
+        characterInfo->centerXPercent = position;
+
         int rendererWidth, rendererHeight;
         SDL_GetRendererOutputSize(renderer, &rendererWidth, &rendererHeight);
-        characterInfo->y = (int)((float)(rendererHeight - _characterTextureHeight) / (float)rendererHeight * (float)100) + 1;
+        characterInfo->centerYPercent = (int)((float)(rendererHeight - ((float)_characterTextureHeight / 2.0)) / (float)rendererHeight * (float)100) + 1;
 
-        // calculate x
-        characterInfo->x = position - (int)((float)(_characterTextureWidth) / (float)rendererWidth * (float)100 / 2);
 
         characterInfo->isAlive = true;
         characterInfo->charaID = charaID;
@@ -120,7 +129,7 @@ namespace sdl {
         std::cout << "Character Info:" << std::endl;
         std::cout << "  charaID: " << characterInfo->charaID << std::endl;
         std::cout << "  filename: " << characterInfo->filename << std::endl;
-        std::cout << "  x: " << characterInfo->x << std::endl;
+        std::cout << "  centerXPercent: " << characterInfo->centerXPercent << std::endl;
         std::cout << "  layer: " << characterInfo->layer << std::endl;
         std::cout << "  alpha: " << characterInfo->alpha << std::endl;
         std::cout << "  isAlive: " << characterInfo->isAlive << std::endl;
@@ -176,7 +185,7 @@ namespace sdl {
             // 如果找到了角色信息
             if (it != characters.end()) {
                 std::shared_ptr<CharaInfo> character = *it;
-                character->animation = CharaAnimation{AnimationMode::QUAKE,CHARACTER_ANIMATION_DEFAULT_QUAKE_TIME,0,character->x,character->y};
+                character->animation = CharaAnimation{AnimationMode::QUAKE,CHARACTER_ANIMATION_DEFAULT_QUAKE_TIME,0,character->centerXPercent,character->centerYPercent};
             }
         }
     }
@@ -189,7 +198,7 @@ namespace sdl {
             // 如果找到了角色信息
             if (it != characters.end()) {
                 std::shared_ptr<CharaInfo> character = *it;
-                character->animation = CharaAnimation{AnimationMode::UP,CHARACTER_ANIMATION_DEFAULT_UP_TIME,0,character->x,character->y};
+                character->animation = CharaAnimation{AnimationMode::UP,CHARACTER_ANIMATION_DEFAULT_UP_TIME,0,character->centerXPercent,character->centerYPercent};
             }
         }
     }
@@ -202,7 +211,7 @@ namespace sdl {
             // 如果找到了角色信息
             if (it != characters.end()) {
                 std::shared_ptr<CharaInfo> character = *it;
-                character->animation = CharaAnimation{AnimationMode::DOWN,CHARACTER_ANIMATION_DEFAULT_DOWN_TIME,0,character->x,character->y};
+                character->animation = CharaAnimation{AnimationMode::DOWN,CHARACTER_ANIMATION_DEFAULT_DOWN_TIME,0,character->centerXPercent,character->centerYPercent};
             }
         }
     }
@@ -224,8 +233,11 @@ namespace sdl {
 
             int rendererWidth, rendererHeight;
             SDL_GetRendererOutputSize(renderer, &rendererWidth, &rendererHeight);
-            SDL_Rect targetrRect = {(int)(((float)character->x / 100) * rendererWidth), (int)(((float)character->y / 100) * rendererHeight), 100, 100};
-            SDL_QueryTexture(character->charaTexture, NULL, NULL, &targetrRect.w, &targetrRect.h);
+//            SDL_Rect targetrRect = {(int)(((float)character->x / 100) * rendererWidth), (int)(((float)character->y / 100) * rendererHeight), 100, 100};
+//            SDL_QueryTexture(character->charaTexture, NULL, NULL, &targetrRect.w, &targetrRect.h);
+            int textureWidth, textureHeight;
+            SDL_QueryTexture(character->charaTexture, NULL, NULL, &textureWidth, &textureHeight);
+            SDL_Rect targetrRect = makeRenderRect(character->centerXPercent, character->centerYPercent, rendererWidth, rendererHeight, textureWidth, textureHeight);
 
             SDL_RenderCopy(renderer, character->charaTexture, nullptr, &targetrRect);
             // SDL_RenderCopy(renderer, testTexture, nullptr, &targetrRect);

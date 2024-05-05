@@ -2,6 +2,7 @@
 // Created by EinoPlasma on 2024/5/5.
 //
 
+#include <stdexcept>
 #include "sdlUtils.h"
 
 namespace sdl {
@@ -28,4 +29,27 @@ namespace sdl {
 
         return targetTexture;
     }
+
+    SDL_Rect
+    makeRenderRect(int centerXPercent, int centerYPercent, unsigned int screenWidth, unsigned int screenHeight,
+                        unsigned int textureWidth, unsigned int textureHeight) {
+        // 返回一个通过一texture中点在屏幕上的位置的百分比来定义的XY坐标指定的renderRect
+        if (abs(centerXPercent) > 100 || abs(centerYPercent) > 100) {
+            throw std::runtime_error("invalid centerXPercent or centerYPercent");
+        }
+        if (centerXPercent < 0 || centerYPercent < 0) {
+            SDL_Log("Warning: centerXPercent or centerYPercent is less than zero");
+        }
+
+        SDL_Rect renderRect;
+        renderRect.w = textureWidth;
+        renderRect.h = textureHeight;
+
+        renderRect.x = (int) (((float)screenWidth * centerXPercent / 100.0) - textureWidth / 2.0);
+        renderRect.y = (int) (((float)screenHeight * centerYPercent / 100.0) - textureHeight / 2.0);
+
+        return renderRect;
+    }
+
+
 } // sdl

@@ -104,8 +104,8 @@ namespace sdl {
             SDL_Rect textureRectHover = {textTextureHover_w, 0, textTextureHover_w, textTextureHover_h};
 
 
-            SDL_Rect targetRenderRect = {100, 100 + (int)(i * (textTextureNotHover_h + 10)), textTextureNotHover_w, textTextureNotHover_h};
-
+            //SDL_Rect targetRenderRect = {100, 100 + (int)(i * (textTextureNotHover_h + 10)), textTextureNotHover_w, textTextureNotHover_h};
+            SDL_Rect targetRenderRect = sdl::makeRenderRect(50, 20 + (int)(i * 10),director->getConfig().imagesize_width, director->getConfig().imagesize_height, textTextureNotHover_w, textTextureNotHover_h);
             std::shared_ptr<Button> button = std::make_shared<Button>(textureRectNotHover, textureRectHover, buttonTexture, targetRenderRect, std::to_string(i));
 
             selectionUi->addButton(button);

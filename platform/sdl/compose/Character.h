@@ -84,8 +84,8 @@ coord_mode x 坐标表示的含义 y 坐标表示的含义
             bool isAlive{true};
             int charaID{};
             std::string filename;
-            unsigned char x{}; // texture最左边在屏幕上x轴的百分比，0表示屏幕左边，100表示屏幕右边，范围0-100
-            unsigned char y{}; // texture最上边在屏幕上y轴的百分比，0表示屏幕上边，100表示屏幕下边，范围0-100
+            unsigned char centerXPercent{}; // texture中心在屏幕上x轴的百分比，0表示屏幕左边，100表示屏幕右边，范围0-100
+            unsigned char centerYPercent{}; // texture中心在屏幕上y轴的百分比，0表示屏幕上边，100表示屏幕下边，范围0-100
             int layer{};
             CharaAnimation animation{AnimationMode::FADE_IN, CHARACTER_ANIMATION_DEFAULT_FADE_TIME, 0};
             // SDL_Texture* charaTexture{nullptr};
