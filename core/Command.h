@@ -746,6 +746,10 @@ namespace core {
                 throw std::invalid_argument("Invalid parameter size. Expected 2 parameters.");
             }
             condition_literal = params[0];
+            // TODO：本命令的解释鲁棒性不高，随便多加几个空格就可能导致解析错误
+            if (condition_literal.find(" = ") != std::string::npos) {
+                condition_literal = condition_literal.replace(condition_literal.find(" = "), 3, "="); // replace " = " to "="
+            }
             std::string condition_operator;
             if (condition_literal.find("!=") != std::string::npos) {
                 comparison_type = NOT_EQUAL;
