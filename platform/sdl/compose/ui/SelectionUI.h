@@ -19,7 +19,7 @@ namespace sdl {
         std::shared_ptr<core::Director> director = nullptr;
         std::deque<std::unique_ptr<sdl::UiEvent>> uiEventQueue = {};
         void handleUiEvents() override;
-        void diactivateUi();
+        void deactivateUi();
         bool flagUiAlive = true; // 用户做出选择（收到正确的点击事件）后，该值置为false，然后本对象的render()方法将不再渲染SelectionUI到屏幕。
     public:
         void render() override;

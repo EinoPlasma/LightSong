@@ -64,12 +64,12 @@ namespace sdl {
                 auto targetUiEvent = dynamic_cast<ButtonLeftClick*>(uiEvent.get());
                 unsigned int fsel = std::stoi(targetUiEvent->buttonData);
                 director->setFSEL(fsel);
-                diactivateUi();
+                deactivateUi();
             }
         }
     }
 
-    void SelectionUI::diactivateUi() {
+    void SelectionUI::deactivateUi() {
         flagUiAlive = false;
     }
 
