@@ -10,6 +10,8 @@
 namespace sdl {
 
     class BlankUI : public UI {
+    private:
+        void handleUiEvents() {};
     public:
         void render() override {};
         void update(unsigned int dt) override {};

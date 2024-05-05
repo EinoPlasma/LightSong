@@ -9,12 +9,13 @@ namespace sdl {
     void SelectionUI::handleSdlEvent(const SDL_Event *event) {
         // if event is mouse hover
         if (event->type == SDL_MOUSEMOTION) {
+            // change sourceRect for render hover or notHover texture
             for (auto &button : buttons) {
                 if (event->motion.x >= button->targetRenderRect.x && event->motion.x <= button->targetRenderRect.x + button->targetRenderRect.w && event->motion.y >= button->targetRenderRect.y && event->motion.y <= button->targetRenderRect.y + button->targetRenderRect.h) {
                     // mouse in button
-                    button->flagHover = true;
+                    button->sourceRect = button->textureRectHover;
                 } else {
-                    button->flagHover = false;
+                    button->sourceRect = button->textureRectNotHover;
                 }
             }
         } else if (event->type == SDL_MOUSEBUTTONDOWN) {
@@ -23,9 +24,7 @@ namespace sdl {
                     // left click
                     if (event->motion.x >= button->targetRenderRect.x && event->motion.x <= button->targetRenderRect.x + button->targetRenderRect.w && event->motion.y >= button->targetRenderRect.y && event->motion.y <= button->targetRenderRect.y + button->targetRenderRect.h) {
                         // mouse in button
-                        unsigned int fsel = std::stoi(button->data);
-                        director->setFSEL(fsel);
-                        flagUiAlive = false;
+                        uiEventQueue.emplace_back(std::make_unique<ButtonLeftClick>(button->data));
                     }
                 }
             }
@@ -43,13 +42,7 @@ namespace sdl {
         }
 
         for (auto &button : buttons) {
-            SDL_Rect sourceRect;
-            if (button->flagHover) {
-                sourceRect = button->textureRectHover;
-            } else {
-                sourceRect = button->textureRectNotHover;
-            }
-            SDL_RenderCopy(renderer, button->texture, &sourceRect, &button->targetRenderRect);
+            SDL_RenderCopy(renderer, button->texture, &button->sourceRect, &button->targetRenderRect);
         }
     }
 
@@ -59,6 +52,30 @@ namespace sdl {
         }
     }
 
+    void SelectionUI::handleUiEvents() {
+//        if (uiEventQueue.empty()) {
+//            return;
+//        }
+        while (!uiEventQueue.empty()) {
+            std::unique_ptr<UiEvent> uiEvent = std::move(uiEventQueue.front());
+            uiEventQueue.pop_front();
+
+            if (uiEvent->type() == UiEventType::BUTTON_LEFT_CLICK) {
+                auto targetUiEvent = dynamic_cast<ButtonLeftClick*>(uiEvent.get());
+                unsigned int fsel = std::stoi(targetUiEvent->buttonData);
+                director->setFSEL(fsel);
+                diactivateUi();
+            }
+        }
+    }
+
+    void SelectionUI::diactivateUi() {
+        flagUiAlive = false;
+    }
+
+    void SelectionUI::update(unsigned int dt) {
+        handleUiEvents();
+    }
 
 
     std::unique_ptr<SelectionUI> createSelectionUiFromSel(SDL_Renderer* renderer, const std::shared_ptr<core::Director>& director, TTF_Font *font, const std::vector<std::string>& selections) {
@@ -84,7 +101,7 @@ namespace sdl {
             SDL_QueryTexture(textTextureHover, nullptr, nullptr, &textTextureHover_w, &textTextureHover_h);
 
             SDL_Rect textureRectNotHover = {0, 0, textTextureNotHover_w, textTextureNotHover_h};
-            SDL_Rect textureRectHover = {textTextureHover_w + 1, 0, textTextureHover_w, textTextureHover_h};
+            SDL_Rect textureRectHover = {textTextureHover_w, 0, textTextureHover_w, textTextureHover_h};
 
 
             SDL_Rect targetRenderRect = {100, 100 + (int)(i * (textTextureNotHover_h + 10)), textTextureNotHover_w, textTextureNotHover_h};

@@ -15,6 +15,7 @@
 
 #include "../Composer.h"
 #include "../../../../core/Director.h"
+#include "UiEvent.h"
 
 namespace sdl {
 
@@ -29,8 +30,8 @@ namespace sdl {
     struct Button {
         SDL_Rect textureRectNotHover;
         SDL_Rect textureRectHover;
+        SDL_Rect sourceRect; // the actual render rect
         bool flagDisable = false;
-        bool flagHover = false;
         SDL_Texture* texture;
         SDL_Rect targetRenderRect;
         std::string data;
@@ -44,6 +45,8 @@ namespace sdl {
         SDL_Renderer* renderer;
         std::vector<std::shared_ptr<Button>> buttons;
         std::shared_ptr<core::Director> director = nullptr;
+        std::unique_ptr<std::deque<sdl::UiEvent>> uiEventQueue = {};
+        virtual void handleUiEvents() = 0;
     public:
         virtual void render() = 0;
         virtual void update(unsigned int dt) = 0;
