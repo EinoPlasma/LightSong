@@ -386,7 +386,10 @@ void Interface::readAndExecuteCommands()
             }
             if (targetCmd->isLoop) {
                 SDL_Log("se cmd: %s, Loop=true", targetCmd->filename.c_str());
-                Mix_PlayChannel(-1, se, -1);
+                // TODO: impl loop and stop
+                SDL_Log("Warning: Loop is not implemented yet");
+                // Mix_PlayChannel(-1, se, -1);
+                Mix_PlayChannel(-1, se, 0);
             } else {
                 SDL_Log("se cmd: %s, Loop=false", targetCmd->filename.c_str());
                 Mix_PlayChannel(-1, se, 0);
