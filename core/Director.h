@@ -22,12 +22,13 @@ namespace core {
         std::unique_ptr<core::Environment> environment = nullptr;
     public:
         explicit Director(std::basic_string<char> root_path);
-        void next();
         void setFSEL(unsigned int choice);
         const GameConfig& getConfig() const;
 
-        std::unique_ptr<cli::CliCommand> nextCliCommand();
+        void loadSave(unsigned char saveIndex);
+        void writeSave(unsigned char saveIndex);
 
+        std::unique_ptr<cli::CliCommand> nextCliCommand();
         std::unique_ptr<sdl::SdlCommand> nextSdlCommand();
     };
 

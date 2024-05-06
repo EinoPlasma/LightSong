@@ -88,19 +88,16 @@ coord_mode x 坐标表示的含义 y 坐标表示的含义
             unsigned char centerYPercent{}; // texture中心在屏幕上y轴的百分比，0表示屏幕上边，100表示屏幕下边，范围0-100
             int layer{};
             CharaAnimation animation{AnimationMode::FADE_IN, CHARACTER_ANIMATION_DEFAULT_FADE_TIME, 0};
-            // SDL_Texture* charaTexture{nullptr};
             SDL_Texture* charaTexture;
             unsigned int alpha{255};
 
             explicit CharaInfo(SDL_Texture* charaTexture) : charaTexture(charaTexture) {}; // SDL_Texture* charaTexture必须用参数列表初始化，否则texture无效！
         };
+
         std::vector<std::shared_ptr<CharaInfo>> characters{};
         SDL_Renderer* renderer = nullptr; // 注意在render()的时候要获取窗口的大小，在此类中是通过renderer获取的（SDL_GetRendererOutputSize(renderer, &rendererWidth, &rendererHeight);）请确保renderer绑定的是窗口而不是纹理
         std::string charaPath;
         std::string charaImgFormat;
-
-        SDL_Texture* testTexture = IMG_LoadTexture(renderer, ("C:\\LightSong\\reference\\games\\frfr2\\android\\FreeFriends2\\chara\\smi0107.png"));
-
     public:
         void update(unsigned int dt);
         void render();

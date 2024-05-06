@@ -568,6 +568,13 @@ namespace core {
         return std::make_unique<sdl::SdlCommandExit>();
     }
 
+    void Director::loadSave(unsigned char saveIndex) {
+        environment->loadSave(root_path + PATH_DIR_SAVE + PATH_FILE_PREFIX_SAVE + std::to_string(saveIndex) + PATH_FILE_SUFFIX_SAVE);
+    }
+
+    void Director::writeSave(unsigned char saveIndex) {
+        environment->writeSave(root_path + PATH_DIR_SAVE + PATH_FILE_PREFIX_SAVE + std::to_string(saveIndex) + PATH_FILE_SUFFIX_SAVE);
+    }
 
     std::unique_ptr<sdl::SdlCommand> createSdlCommand(std::unique_ptr<core::Command>& command) {
         switch (command->type()) {

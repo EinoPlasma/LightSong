@@ -36,6 +36,7 @@ namespace core {
     class Environment {
     private:
         // TODO: add global variables support
+        // TODO: 实现历史对话内容、对应语音（甚至对应运行时存档快照的记录，用于游戏中往回跳转）的记录，在此基础上实现存读档页GUI详细信息的显示和历史对话页GUI
         std::unordered_map<std::string, int> variables;
         std::stack<CallStackItem> call_stack;
         std::unique_ptr<core::GameConfig> config = nullptr;
@@ -54,6 +55,9 @@ namespace core {
         bool varExists(const std::string &var_name);
         void pushCallStack(CallStackItem item);
         CallStackItem popCallStack();
+
+        void loadSave(const std::string& savePath);
+        void writeSave(const std::string& savePath);
 
         const GameConfig& getConfig() const;
     };

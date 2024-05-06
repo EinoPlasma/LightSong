@@ -5,6 +5,7 @@
 #ifndef LIGHTSONG_LABELSETUI_H
 #define LIGHTSONG_LABELSETUI_H
 
+#include <SDL_ttf.h>
 #include "UI.h"
 
 namespace sdl {
@@ -18,18 +19,22 @@ namespace sdl {
         void handleUiEvents() override;
         void deactivateUi();
         bool flagUiAlive = true; // 用户做出选择（收到正确的点击事件）后，该值置为false，然后本对象的render()方法将不再渲染SelectionUI到屏幕。
-
-        void addButton(const std::shared_ptr<Button>& button);
     public:
         void render() override;
         void update(unsigned int dt) override;
         bool isUiAlive() override {return flagUiAlive;}
+
+        void addButton(const std::shared_ptr<Button>& button);
 
         void handleSdlEvent(const SDL_Event *event) override;
 
         LabelSetUI(SDL_Renderer* renderer, std::shared_ptr<core::Director> director) : renderer(renderer), director(std::move(director)) {};
         ~LabelSetUI();
     };
+
+    std::unique_ptr<LabelSetUI> createTestLoadAndSaveUi(SDL_Renderer* renderer, const std::shared_ptr<core::Director>& director, TTF_Font *font);
+
+
 
 } // sdl
 

@@ -34,7 +34,6 @@ namespace core {
     const std::string PATH_DIR_BG = "/bg/";
     const std::string PATH_DIR_BGM = "/bgm/";
     const std::string PATH_DIR_CHARA = "/chara/";
-    const std::string PATH_DIR_SAVE = "/save/";
     const std::string PATH_DIR_SCRIPT = "/script/";
     const std::string PATH_DIR_SE = "/se/";
     const std::string PATH_DIR_SYSTEM = "/system/";
@@ -43,8 +42,14 @@ namespace core {
     const std::string PATH_FILE_GAMECONFIG = "/gameconfig.txt";
     const std::string PATH_FILE_ICON = "/icon.png";
 
+    const std::string PATH_DIR_SAVE = "/save/";
+    const std::string PATH_FILE_PREFIX_SAVE = "save_";
+    const std::string PATH_FILE_SUFFIX_SAVE = ".json";
+
     const std::string PATH_FILE_BG_LOGO1 = "logo1";
     const std::string PATH_FILE_BG_LOGO2 = "logo2";
+
+
 } // core
 
 #endif //LIGHTSONG_ENGINEPATH_H

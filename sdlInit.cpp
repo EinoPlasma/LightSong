@@ -9,6 +9,7 @@
 #include "platform/sdl/compose/ui/UI.h"
 #include "platform/sdl/compose/ui/SelectionUI.h"
 #include "platform/sdl/compose/ui/BlankUI.h"
+#include "platform/sdl/compose/ui/LabelSetUI.h"
 
 #include <iostream>
 #include <SDL2/SDL.h>
@@ -187,22 +188,24 @@ void Interface::handleEvents()
             exit(0);
         }
         else if (e.type == SDL_KEYDOWN) {
-
             if (e.key.keysym.sym == SDLK_SPACE) {
-
                 if (ui_ != nullptr && !ui_->isUiAlive()){
                     // 执行下一条指令，仅在ui_不开启时进行。有ui的话就显示ui，不在读新指令
                     readAndExecuteCommands();
                 }
-
             }
-
             // quit if window is closed
             else if (e.key.keysym.sym == SDLK_q) {
                 close();
                 exit(0);
             }
         }
+        else if (e.type == SDL_MOUSEBUTTONUP) {
+            if (e.button.button == SDL_BUTTON_RIGHT) {
+                ui_ = sdl::createTestLoadAndSaveUi(renderer_, director_, font_);
+            }
+        }
+
 
 
         if (ui_ != nullptr){
