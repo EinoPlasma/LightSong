@@ -11,10 +11,16 @@ namespace sdl {
         if (uiEvent->type() == UiEventType::BUTTON_LEFT_CLICK) {
             auto targetUiEvent = dynamic_cast<ButtonLeftClick*>(uiEvent.get());
             // TODO: 1.写director（Environment）的存档、读档、getSaveInfos功能 2.根据getSaveInfos获取到内容生成buttons
-            if (targetUiEvent->buttonData == "save 1") {
-                director->writeSave(1);
-            } else if (targetUiEvent->buttonData == "load 1") {
-                director->loadSave(1);
+            std::stringstream ss;
+            ss << targetUiEvent->buttonData;
+            std::string prompt, index_literal;
+            ss >> prompt;
+            ss >> index_literal;
+            unsigned char index = std::stoi(index_literal);
+            if (prompt == "save") {
+                director->writeSave(index);
+            } else if (prompt == "load") {
+                director->loadSave(index);
             }
             deactivateUi();
         }

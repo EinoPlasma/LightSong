@@ -11,7 +11,11 @@
 #include "../../../../../core/Director.h"
 
 namespace sdl {
-
+    /*
+     * 接受UiEventType::BUTTON_LEFT_CLICK事件，接受一个std::string参数，参数放在UiEvent::ButtonLeftClick.buttonData中，根据参数值有两种操作
+     * 1.存档：”save [index]“，其中index为存档号，unsigned char型，例如”save 1“
+     * 1.读档：”load [index]“，其中index为存档号，unsigned char型，例如”load 1“
+     */
     class SaveAndLoadUiEventHandler : public UiEventHandler {
     private:
         bool flagShouldDeactivate = false;
