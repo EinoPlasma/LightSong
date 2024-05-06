@@ -7,6 +7,7 @@
 
 #include <SDL_ttf.h>
 #include "UI.h"
+#include "uiEventHandler/SaveAndLoadUiEventHandler.h"
 
 namespace sdl {
 
@@ -16,6 +17,7 @@ namespace sdl {
         std::vector<std::shared_ptr<Button>> buttons;
         std::shared_ptr<core::Director> director = nullptr;
         std::deque<std::unique_ptr<sdl::UiEvent>> uiEventQueue = {};
+        std::unique_ptr<SaveAndLoadUiEventHandler> uiEventHandler = std::make_unique<SaveAndLoadUiEventHandler>();
         void handleUiEvents() override;
         void deactivateUi();
         bool flagUiAlive = true; // 用户做出选择（收到正确的点击事件）后，该值置为false，然后本对象的render()方法将不再渲染SelectionUI到屏幕。
