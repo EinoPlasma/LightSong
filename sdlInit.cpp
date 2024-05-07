@@ -10,6 +10,7 @@
 #include "platform/sdl/compose/ui/SelectionUI.h"
 #include "platform/sdl/compose/ui/BlankUI.h"
 #include "platform/sdl/compose/ui/LabelSetUI.h"
+#include "platform/sdl/sdlUtils.h"
 
 #include <iostream>
 #include <SDL2/SDL.h>
@@ -300,6 +301,8 @@ void Interface::readAndExecuteCommands()
             // CHARA_POS case
         } else if (type == sdl::SDL_BG) {
             // BG case
+            character_->clearAllCharacters(); // 如果当前屏幕上有立绘将被清除
+
             auto targetCmd = dynamic_cast<sdl::SdlCommandBg*>(cmd.get());
             SDL_Log("bg cmd: %s", targetCmd->filename.c_str());
             backgroundTexture_ = IMG_LoadTexture(renderer_, (root_path_ + core::PATH_DIR_BG + targetCmd->filename + director_->getConfig().bgformat).c_str());
@@ -353,8 +356,19 @@ void Interface::readAndExecuteCommands()
             // SELECT_IMGS case
         } else if (type == sdl::SDL_WAIT) {
             // WAIT case
+            auto targetCmd = dynamic_cast<sdl::SdlCommandWait*>(cmd.get());
+            SDL_Delay(targetCmd->time);
         } else if (type == sdl::SDL_WAIT_SE) {
             // WAIT_SE case
+            auto targetCmd = dynamic_cast<sdl::SdlCommandWaitSe*>(cmd.get());
+            SDL_Log("wait se cmd");
+            const int SDL_WAIT_SE_MAX_DELAY_TIME_MS = 30 * 1000;
+            const int SDL_WAIT_SE_DELAY_SLICE_TIME_MS = 100;
+            int waitTimeElapsed = 0;
+            while (isMixGroupPlaying((int)MIX_GROUP_TAG::MIX_GROUP_SOUND) && waitTimeElapsed < SDL_WAIT_SE_MAX_DELAY_TIME_MS) {
+                SDL_Delay(SDL_WAIT_SE_DELAY_SLICE_TIME_MS);
+                waitTimeElapsed += SDL_WAIT_SE_DELAY_SLICE_TIME_MS;
+            }
         } else if (type == sdl::SDL_BGM) {
             // BGM case
             auto targetCmd = dynamic_cast<sdl::SdlCommandBgm*>(cmd.get());

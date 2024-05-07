@@ -52,4 +52,21 @@ namespace sdl {
     }
 
 
+
 } // sdl
+
+
+bool isMixGroupPlaying(int mixGroupTag) {
+    int channels = Mix_GroupCount(mixGroupTag);
+    if (channels == 0) {
+        return false;
+    }
+
+    // TODO: 目前本函数仅能检测最新的那个通道，如果有多个通道，需要改进
+    int channel = Mix_GroupNewer(mixGroupTag);
+    if (channel != -1 && Mix_Playing(channel) != 0) {
+        return true;
+    }
+
+    return false;
+}
