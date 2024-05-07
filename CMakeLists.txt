@@ -45,6 +45,6 @@ add_executable(LightSong sdlInit.cpp
         platform/sdl/compose/ui/LabelSetUI.cpp
         platform/sdl/compose/ui/LabelSetUI.h
         include/nlohmann/json_fwd.hpp
-        include/nlohmann/json.hpp platform/sdl/compose/ui/uiEventHandler/SaveAndLoadUiEventHandler.cpp platform/sdl/compose/ui/uiEventHandler/SaveAndLoadUiEventHandler.h platform/sdl/compose/ui/uiEventHandler/UiEventHandler.cpp platform/sdl/compose/ui/uiEventHandler/UiEventHandler.h platform/sdl/compose/ui/uiEventHandler/SelectionUiEventHandler.h platform/sdl/compose/ui/uiEventHandler/SelectionUiEventHandler.cpp)
+        include/nlohmann/json.hpp platform/sdl/compose/ui/uiEventHandler/SaveAndLoadUiEventHandler.cpp platform/sdl/compose/ui/uiEventHandler/SaveAndLoadUiEventHandler.h platform/sdl/compose/ui/uiEventHandler/UiEventHandler.cpp platform/sdl/compose/ui/uiEventHandler/UiEventHandler.h platform/sdl/compose/ui/uiEventHandler/SelectionUiEventHandler.h platform/sdl/compose/ui/uiEventHandler/SelectionUiEventHandler.cpp platform/sdl/Mixer.cpp platform/sdl/Mixer.h)
 
 target_link_libraries(LightSong PRIVATE SDL2::SDL2main SDL2::SDL2 SDL2::SDL2_image SDL2::SDL2_ttf SDL2::SDL2_mixer)

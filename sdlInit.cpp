@@ -50,6 +50,15 @@ private:
     SDL_Texture* textTexture_ = nullptr;
 
     Mix_Music* backgroundMusic_ = nullptr;
+    enum class MIX_GROUP_TAG {
+        MIX_GROUP_VOICE,
+        MIX_GROUP_SOUND,
+    };
+    enum class MIX_FADE_TIME {
+        BGM_FADE_IN_TIME = 1000,
+        VOICE_FADE_OUT_TIME = 100,
+        SE_FADE_OUT_TIME = 100,
+    };
 
     SDL_Rect backgroundRect_;
     SDL_Rect textRect_;
@@ -119,10 +128,7 @@ bool Interface::initialize()
         return false;
     }
 
-    // 注册一个全局回调函数，当音效播放完毕时自动释放。仅适用于通过Mix_PlayChannel函数播放的音效
-    Mix_ChannelFinished([](int channel) {
-        Mix_FreeChunk(Mix_GetChunk(channel));
-    });
+
 
     return true;
 }
@@ -365,11 +371,10 @@ void Interface::readAndExecuteCommands()
             }
             if (targetCmd->isLoop) {
                 SDL_Log("bgm cmd: %s, Loop=true", filename.c_str());
-                Mix_PlayMusic(backgroundMusic_, -1);
             } else {
                 SDL_Log("bgm cmd: %s, Loop=false", filename.c_str());
-                Mix_PlayMusic(backgroundMusic_, 0);
             }
+            Mix_FadeInMusic(backgroundMusic_, targetCmd->isLoop ? -1 : 0, (int)MIX_FADE_TIME::BGM_FADE_IN_TIME);
         } else if (type == sdl::SDL_BGM_STOP) {
             // BGM_STOP case
             if (Mix_PlayingMusic() != 0) {
@@ -389,19 +394,15 @@ void Interface::readAndExecuteCommands()
             }
             if (targetCmd->isLoop) {
                 SDL_Log("se cmd: %s, Loop=true", targetCmd->filename.c_str());
-                // TODO: impl loop and stop
-                SDL_Log("Warning: Loop is not implemented yet");
-                // Mix_PlayChannel(-1, se, -1);
-                Mix_PlayChannel(-1, se, 0);
             } else {
                 SDL_Log("se cmd: %s, Loop=false", targetCmd->filename.c_str());
-                Mix_PlayChannel(-1, se, 0);
             }
+            int targetChannel = Mix_GroupAvailable(-1);
+            Mix_PlayChannel(targetChannel, se, targetCmd->isLoop ? -1 : 0);
+            Mix_GroupChannel(targetChannel, (int)MIX_GROUP_TAG::MIX_GROUP_SOUND); // tag current channel
         } else if (type == sdl::SDL_SE_STOP) {
             // SE_STOP case
-//            const int SDL_SE_STOP_FADE_OUT_TIME = 100;
-//            Mix_FadeOutChannel(CHANNEL_SE, SDL_SE_STOP_FADE_OUT_TIME);
-            SDL_Log("Unimpl: se stop cmd not implemented");
+            Mix_FadeOutGroup((int)MIX_GROUP_TAG::MIX_GROUP_SOUND, (int)MIX_FADE_TIME::SE_FADE_OUT_TIME);
         } else if (type == sdl::SDL_VO) {
             // VO case
             auto targetCmd = dynamic_cast<sdl::SdlCommandVo*>(cmd.get());
@@ -413,19 +414,10 @@ void Interface::readAndExecuteCommands()
                 throw std::runtime_error("SDL_VO: " + std::string(Mix_GetError()));
             }
             SDL_Log("vo cmd: %s", targetCmd->filename.c_str());
-            // halt if CHANNEL_VOICE is playing
-//            if (Mix_Playing(-1)) {
-//                Mix_HaltChannel(-1);
-//            }
-//            // Check if CHANNEL_VOICE is still playing after halting
-//            if (Mix_Playing(CHANNEL_VOICE)) {
-//                // Wait until CHANNEL_VOICE is not playing
-//                while (Mix_Playing(CHANNEL_VOICE)) {
-//                    SDL_Delay(100); // Wait for 100 milliseconds
-//                }
-//            }
-            //TODO: bug, 一段vo没播放完就播下一个vo会崩溃。se可能也有这个bug
-            Mix_PlayChannel(-1, vo, 0);
+            Mix_FadeOutGroup((int)MIX_GROUP_TAG::MIX_GROUP_VOICE, (int)MIX_FADE_TIME::VOICE_FADE_OUT_TIME); // fade out if previous voice is playing
+            int targetChannel = Mix_GroupAvailable(-1);
+            Mix_PlayChannel(targetChannel, vo, 0);
+            Mix_GroupChannel(targetChannel, (int)MIX_GROUP_TAG::MIX_GROUP_VOICE); // tag current channel
         } else if (type == sdl::SDL_LOAD) {
             // LOAD case
         } else if (type == sdl::SDL_ALBUM) {
