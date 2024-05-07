@@ -17,7 +17,7 @@ namespace sdl {
         std::vector<std::shared_ptr<Button>> buttons;
         std::shared_ptr<core::Director> director = nullptr;
         std::deque<std::unique_ptr<sdl::UiEvent>> uiEventQueue = {};
-        std::unique_ptr<SaveAndLoadUiEventHandler> uiEventHandler = std::make_unique<SaveAndLoadUiEventHandler>();
+        std::unique_ptr<UiEventHandler> uiEventHandler = nullptr;
         void handleUiEvents() override;
         void deactivateUi();
         bool flagUiAlive = true; // 用户做出选择（收到正确的点击事件）后，该值置为false，然后本对象的render()方法将不再渲染SelectionUI到屏幕。
@@ -30,7 +30,7 @@ namespace sdl {
 
         void handleSdlEvent(const SDL_Event *event) override;
 
-        LabelSetUI(SDL_Renderer* renderer, std::shared_ptr<core::Director> director) : renderer(renderer), director(std::move(director)) {};
+        LabelSetUI(SDL_Renderer* renderer, std::shared_ptr<core::Director> director, std::unique_ptr<UiEventHandler> uiEventHandler) : renderer(renderer), director(std::move(director)), uiEventHandler(std::move(uiEventHandler)) {};
         ~LabelSetUI();
     };
 

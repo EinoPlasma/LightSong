@@ -73,7 +73,8 @@ namespace sdl {
 
     std::unique_ptr<LabelSetUI>
     createTestLoadAndSaveUi(SDL_Renderer *renderer, const std::shared_ptr<core::Director> &director, TTF_Font *font) {
-        auto testLoadAndSaveUi = std::make_unique<LabelSetUI>(renderer, director);
+        auto targetUiEventHandler = std::make_unique<SaveAndLoadUiEventHandler>();
+        auto testLoadAndSaveUi = std::make_unique<LabelSetUI>(renderer, director, std::move(targetUiEventHandler));
         std::vector<std::string> selections = {"save 1", "load 1"};
         for(size_t i = 0; i < selections.size(); i++) {
             std::string selection = selections[i];
