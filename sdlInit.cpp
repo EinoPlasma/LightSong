@@ -20,6 +20,33 @@
 #include <unordered_set>
 #include <chrono>
 
+void waitForInput(Uint32 timeout) {
+    SDL_Event event;
+    bool keyPressed = false;
+    Uint32 startTime = SDL_GetTicks();
+
+    while (!keyPressed) {
+        while (SDL_PollEvent(&event)) {
+            if (event.type == SDL_QUIT) {
+                // 处理窗口关闭事件
+                // 可以选择退出程序或执行其他操作
+            } else if (event.type == SDL_KEYDOWN || event.type == SDL_MOUSEBUTTONDOWN) {
+                // 处理按键或鼠标按下事件
+                keyPressed = true;
+            }
+        }
+
+        Uint32 currentTime = SDL_GetTicks();
+        Uint32 elapsedTime = currentTime - startTime;
+
+        if (elapsedTime >= timeout) {
+            // return if timeout
+            break;
+        }
+    }
+}
+
+
 // AVG游戏类
 class Interface {
 public:
@@ -57,6 +84,7 @@ private:
     };
     enum class MIX_FADE_TIME {
         BGM_FADE_IN_TIME = 1000,
+        BGM_STOP_FADE_OUT_TIME = 500,
         VOICE_FADE_OUT_TIME = 100,
         SE_FADE_OUT_TIME = 100,
     };
@@ -278,6 +306,9 @@ void Interface::readAndExecuteCommands()
             // TEXT_OFF case
         } else if (type == sdl::SDL_WAITKEY) {
             // WAITKEY case
+            SDL_Log("cmd waitkey");
+            const int SDL_WAITKEY_TIMEOUT = 5000;
+            waitForInput(SDL_WAITKEY_TIMEOUT);
         } else if (type == sdl::SDL_TITLE) {
         } else if (type == sdl::SDL_TITLE_DSP) {
             // TITLE_DSP case
@@ -393,8 +424,7 @@ void Interface::readAndExecuteCommands()
             // BGM_STOP case
             if (Mix_PlayingMusic() != 0) {
                 // Returns non-zero if music is playing, zero otherwise.
-                const int SDL_BGM_STOP_FADE_OUT_TIME = 500;
-                Mix_FadeOutMusic(SDL_BGM_STOP_FADE_OUT_TIME);
+                Mix_FadeOutMusic((int)MIX_FADE_TIME::BGM_STOP_FADE_OUT_TIME);
             }
         } else if (type == sdl::SDL_SE) {
             // SE case
@@ -448,9 +478,10 @@ void Interface::readAndExecuteCommands()
             // std::cerr << "Unknown command type: " << type << std::endl;
         }
     }
-
-
 }
+
+
+
 
 void Interface::render()
 {
