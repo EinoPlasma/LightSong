@@ -11,6 +11,7 @@
 #include "platform/sdl/compose/ui/BlankUI.h"
 #include "platform/sdl/compose/ui/LabelSetUI.h"
 #include "platform/sdl/sdlUtils.h"
+#include "platform/sdl/compose/Dialogue.h"
 
 #include <iostream>
 #include <SDL2/SDL.h>
@@ -69,6 +70,7 @@ private:
 
     std::unique_ptr<sdl::Character> character_ = nullptr;
     std::unique_ptr<sdl::UI> ui_ = nullptr;
+    std::unique_ptr<sdl::Dialogue> dialogue_ = nullptr;
 
     SDL_Window* window_;
     SDL_Renderer* renderer_ = nullptr;
@@ -139,6 +141,34 @@ bool Interface::initialize()
 
     ui_ = std::make_unique<sdl::BlankUI>();
 
+    // init dialogue_
+    sdl::DialogueAlignmentType nameAlignment = sdl::DialogueAlignmentType::MIDDLE;
+    if (director_->getConfig().namealign == "middle") {
+        nameAlignment = sdl::DialogueAlignmentType::MIDDLE;
+    } else if (director_->getConfig().namealign == "left") {
+        nameAlignment = sdl::DialogueAlignmentType::LEFT;
+    } else if (director_->getConfig().namealign == "right") {
+        nameAlignment = sdl::DialogueAlignmentType::RIGHT;
+    }
+    SDL_Color textcolor;
+    sdl::convertHexToSDLColor(director_->getConfig().textcolor, &textcolor);
+
+    sdl::DialogueConfig dialogueConfig = {
+            director_->getConfig().nameboxorig_x,
+            director_->getConfig().nameboxorig_y,
+            textcolor,
+            director_->getConfig().msgtb_top,
+            director_->getConfig().msgtb_bottom,
+            director_->getConfig().msglr_left,
+            director_->getConfig().msglr_right,
+            nameAlignment,
+            255
+    };
+
+    // dialogue_ = std::make_unique<sdl::Dialogue>(renderer_, root_path_ + core::PATH_FILE_MESSAGE, root_path_ + core::PATH_FILE_NAME, dialogueConfig);
+    dialogue_ = std::make_unique<sdl::Dialogue>(nullptr, root_path_ + core::PATH_FILE_MESSAGE, root_path_ + core::PATH_FILE_NAME, dialogueConfig);
+    SDL_Log("Warning: current dialogue_ is a fake one.");
+
     // int imgFlags = IMG_INIT_PNG | IMG_INIT_JPG | IMG_INIT_TIF | IMG_INIT_WEBP | IMG_INIT_AVIF | IMG_INIT_JXL;
     // TODO: 发布时修改此项支持更多格式
     int imgFlags = IMG_INIT_PNG | IMG_INIT_JPG;
@@ -165,38 +195,15 @@ bool Interface::initialize()
 void Interface::loadMedia()
 {
     // 加载背景纹理
-    SDL_Surface* backgroundSurface = IMG_Load((root_path_ + core::PATH_DIR_BG + core::PATH_FILE_BG_LOGO1 + director_->getConfig().bgformat).c_str());
+    SDL_Surface* backgroundSurface = IMG_Load((root_path_ + core::PATH_FILE_BG_LOGO1 + director_->getConfig().bgformat).c_str());
     backgroundTexture_ = SDL_CreateTextureFromSurface(renderer_, backgroundSurface);
     SDL_FreeSurface(backgroundSurface);
-
-//    // 加载立绘纹理
-//    SDL_Surface* characterSurface = IMG_Load((RESOURCE_PATH + CHARACTER_FILE).c_str());
-//    characterTexture_ = SDL_CreateTextureFromSurface(renderer_, characterSurface);
-//    SDL_FreeSurface(characterSurface);
 
     // 加载字体
     font_ = TTF_OpenFont("font.ttf", 28);
     if (font_ == nullptr) {
         std::cout << "Failed to load font! SDL_ttf Error: " << TTF_GetError() << std::endl;
     }
-
-    // 创建文字纹理
-    SDL_Color textColor = { 255, 255, 255 };
-    SDL_Surface* textSurface = TTF_RenderUTF8_Solid(font_, "TEXT_CONTENT 测试文字", textColor);
-    textTexture_ = SDL_CreateTextureFromSurface(renderer_, textSurface);
-    SDL_FreeSurface(textSurface);
-
-//    // 加载背景音乐
-//    backgroundMusic_ = Mix_LoadMUS((RESOURCE_PATH + BACKGROUND_MUSIC_FILE).c_str());
-//    if (backgroundMusic_ == nullptr) {
-//        std::cout << "Failed to load background music! SDL_mixer Error: " << Mix_GetError() << std::endl;
-//    }
-
-//    // 加载音效
-//    soundEffect_ = Mix_LoadWAV((RESOURCE_PATH + SOUND_EFFECT_FILE).c_str());
-//    if (soundEffect_ == nullptr) {
-//        std::cout << "Failed to load sound effect! SDL_mixer Error: " << Mix_GetError() << std::endl;
-//    }
 }
 
 void Interface::close()
@@ -222,12 +229,19 @@ void Interface::handleEvents()
             close();
             exit(0);
         }
-        else if (e.type == SDL_KEYDOWN) {
+
+        if (ui_ == nullptr){
+            SDL_Log("Interface::handleEvents, ui_->handleSdlEvent(&e) failed. ui_ is null");
+        }
+        // ui被激活的话事件只会交给ui处理，后面的事件处理代码不会执行
+        if (ui_ != nullptr && ui_->isUiAlive()) {
+            ui_->handleSdlEvent(&e);
+            break;
+        }
+
+        if (e.type == SDL_KEYDOWN) {
             if (e.key.keysym.sym == SDLK_SPACE) {
-                if (ui_ != nullptr && !ui_->isUiAlive()){
-                    // 执行下一条指令，仅在ui_不开启时进行。有ui的话就显示ui，不在读新指令
-                    readAndExecuteCommands();
-                }
+                readAndExecuteCommands();
             }
             // quit if window is closed
             else if (e.key.keysym.sym == SDLK_q) {
@@ -237,16 +251,11 @@ void Interface::handleEvents()
         }
         else if (e.type == SDL_MOUSEBUTTONUP) {
             if (e.button.button == SDL_BUTTON_RIGHT) {
+                // 调出左键菜单
                 ui_ = sdl::createTestLoadAndSaveUi(renderer_, director_, font_);
+            } else {
+                readAndExecuteCommands();
             }
-        }
-
-
-
-        if (ui_ != nullptr){
-            ui_->handleSdlEvent(&e);
-        } else {
-            SDL_Log("Interface::handleEvents, ui_->handleSdlEvent(&e) failed. ui_ is null");
         }
     }
 }
@@ -271,7 +280,7 @@ void Interface::readAndExecuteCommands()
 
     // #waitkey指令没有加进去，它要求如果 5 秒后还没有按键，则继续执行下一条指令。
     // #sel #select_text #select_var #select_img #select_imgs 还有 五、 系统类指令 都未加入
-    const std::unordered_set<sdl::SdlCommandType> waitKeyCommands = {sdl::SDL_SAY, sdl::SDL_TEXT, sdl::SDL_TITLE_DSP, sdl::SDL_SEL};
+    const std::unordered_set<sdl::SdlCommandType> waitKeyCommands = {sdl::SDL_LOAD, sdl::SDL_SAY, sdl::SDL_TEXT, sdl::SDL_TITLE_DSP, sdl::SDL_SEL};
 
     bool flagWaitKey = false;
     // 没有遇到在waitKeyCommands中的指令就一直问Director问指令，直到问到了要停下来的指令（waitKeyCommands中的指令）为止
@@ -283,7 +292,10 @@ void Interface::readAndExecuteCommands()
             flagWaitKey = true;
         }
 
-        if (type == sdl::SDL_SAY) {
+        if (type == sdl::SDL_EXIT) {
+            close();
+            exit(0);
+        } else if (type == sdl::SDL_SAY) {
             auto targetCmd = dynamic_cast<sdl::SdlCommandSay*>(cmd.get());
             SDL_Log("say cmd: %s", targetCmd->content.c_str());
             // free previous text texture
@@ -298,7 +310,14 @@ void Interface::readAndExecuteCommands()
 
             SDL_Color textColor = { 255, 255, 255 , 200};
             // SDL_Surface* textSurface = TTF_RenderUTF8_Blended(font_, targetCmd->content.c_str(), textColor);
-            SDL_Surface* textSurface = TTF_RenderUTF8_Shaded_Wrapped(font_, ("[" + targetCmd->name + "] " + targetCmd->content).c_str(), textColor,  { 50, 50, 50 , 200}, 500);
+            std::string subtitle;
+            if(targetCmd->flag_contains_name) {
+                subtitle = "[" + targetCmd->name + "] " + targetCmd->content;
+            } else {
+                subtitle = targetCmd->content;
+            }
+
+            SDL_Surface* textSurface = TTF_RenderUTF8_Shaded_Wrapped(font_, subtitle.c_str(), textColor,  { 50, 50, 50 , 200}, director_->getConfig().imagesize_width);
             textTexture_ = SDL_CreateTextureFromSurface(renderer_, textSurface);
             SDL_FreeSurface(textSurface);
         } else if (type == sdl::SDL_TEXT) {
@@ -349,6 +368,9 @@ void Interface::readAndExecuteCommands()
             // MOVIE case
         } else if (type == sdl::SDL_TEXTBOX) {
             // TEXTBOX case
+            auto targetCmd = dynamic_cast<sdl::SdlCommandTextBox*>(cmd.get());
+            SDL_Log("textbox cmd: %s, %s", targetCmd->messageFilename.c_str(), targetCmd->nameFilename.c_str());
+            dialogue_->changeImgPath(root_path_ + core::PATH_DIR_SYSTEM + targetCmd->messageFilename + core::CONFIG_SYSTEM_IMG_SUFFIX, root_path_ + core::PATH_DIR_SYSTEM + targetCmd->nameFilename + core::CONFIG_SYSTEM_IMG_SUFFIX);
         } else if (type == sdl::SDL_CHARA_QUAKE) {
             // CHARA_QUAKE case
         } else if (type == sdl::SDL_CHARA_DOWN) {
@@ -464,6 +486,15 @@ void Interface::readAndExecuteCommands()
             Mix_GroupChannel(targetChannel, (int)MIX_GROUP_TAG::MIX_GROUP_VOICE); // tag current channel
         } else if (type == sdl::SDL_LOAD) {
             // LOAD case
+            auto targetCmd = dynamic_cast<sdl::SdlCommandLoad*>(cmd.get());
+
+            if (targetCmd->saveNum == -1) {
+                director_->loadSave(0);
+            } else {
+                director_->loadSave(targetCmd->saveNum);
+            }
+
+            // ui_ = sdl::createTestLoadAndSaveUi(renderer_, director_, font_);
         } else if (type == sdl::SDL_ALBUM) {
             // ALBUM case
         } else if (type == sdl::SDL_MUSIC) {
@@ -474,7 +505,7 @@ void Interface::readAndExecuteCommands()
             // CONFIG case
         } else {
             // Default case
-            throw std::runtime_error("Unknown command type: " + std::to_string(type));
+            throw std::runtime_error("sdlInit.cpp: Unknown command type: " + std::to_string(type));
             // std::cerr << "Unknown command type: " << type << std::endl;
         }
     }
@@ -495,7 +526,7 @@ void Interface::render()
     if (character_ != nullptr) {
         character_->render();
     } else {
-        SDL_Log("Interface::render, character_->render() failed. Character is null");
+        SDL_Log("Interface::render, character_->render() failed. character_ is null");
     }
 
     // 渲染ui
@@ -505,17 +536,18 @@ void Interface::render()
         SDL_Log("Interface::render, ui_->render() failed. ui_ is null");
     }
 
-//    SDL_Rect characterRect_;
-//    characterRect_.x = 100;
-//    characterRect_.y = 100;
-//    characterRect_.w = 100;
-//    characterRect_.h = 300;
-//
-//    SDL_RenderCopy(renderer_, characterTexture_, nullptr, &characterRect_);
+
 
     // 渲染文字层
     SDL_QueryTexture(textTexture_, NULL, NULL, &textRect_.w, &textRect_.h);
     SDL_RenderCopy(renderer_, textTexture_, nullptr, &textRect_);
+
+    // 渲染文字层
+    if (dialogue_ != nullptr) {
+        dialogue_->render();
+    } else {
+        SDL_Log("Interface::render, dialogue_->render() failed. dialogue_ is null");
+    }
 
     // 更新屏幕显示
     SDL_RenderPresent(renderer_);

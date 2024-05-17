@@ -337,7 +337,6 @@ namespace core {
             }
 
 
-
             // 注意不是所有的分支都会被执行，在DIRECT_FORWARD_COMMANDS中的case是直接由createSdlCommand()处理的，下面对应的分支就不会执行了
             if (type == PLAIN_TEXT) {
                 // BLANK case
@@ -559,7 +558,7 @@ namespace core {
                 // CONFIG case
             } else {
                 // Default case
-                throw std::runtime_error("Unknown command type: " + std::to_string(type));
+                throw std::runtime_error("Director.cpp: Unknown command type: " + std::to_string(type));
                 // std::cerr << "Unknown command type: " << type << std::endl;
             }
         }
@@ -570,9 +569,12 @@ namespace core {
 
     void Director::loadSave(unsigned char saveIndex) {
         environment->loadSave(root_path + PATH_DIR_SAVE + PATH_FILE_PREFIX_SAVE + std::to_string(saveIndex) + PATH_FILE_SUFFIX_SAVE);
+        parser = loadScript(root_path + PATH_DIR_SCRIPT + environment->curr_script_name + CONFIG_SCRITP_SUFFIX);
     }
 
     void Director::writeSave(unsigned char saveIndex) {
+        const unsigned int DEFAULT_AUTO_SAVE_INDEX = 0;
+        environment->writeSave(root_path + PATH_DIR_SAVE + PATH_FILE_PREFIX_SAVE + std::to_string(DEFAULT_AUTO_SAVE_INDEX) + PATH_FILE_SUFFIX_SAVE);
         environment->writeSave(root_path + PATH_DIR_SAVE + PATH_FILE_PREFIX_SAVE + std::to_string(saveIndex) + PATH_FILE_SUFFIX_SAVE);
     }
 

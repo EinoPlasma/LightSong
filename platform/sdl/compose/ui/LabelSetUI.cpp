@@ -58,7 +58,7 @@ namespace sdl {
                     button->sourceRect = button->textureRectNotHover;
                 }
             }
-        } else if (event->type == SDL_MOUSEBUTTONDOWN) {
+        } else if (event->type == SDL_MOUSEBUTTONUP) {
             for (auto &button : buttons) {
                 if (event->button.button == SDL_BUTTON_LEFT) {
                     // left click
